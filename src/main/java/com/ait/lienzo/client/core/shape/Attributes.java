@@ -24,7 +24,6 @@ import com.ait.lienzo.client.core.event.IAttributesChangedBatcher;
 import com.ait.lienzo.client.core.event.ImmediateAttributesChangedBatcher;
 import com.ait.lienzo.client.core.image.filter.ImageDataFilter.FilterConvolveMatrix;
 import com.ait.lienzo.client.core.shape.json.IJSONSerializable;
-import com.ait.lienzo.client.core.types.BoundingBox;
 import com.ait.lienzo.client.core.types.DashArray;
 import com.ait.lienzo.client.core.types.DragBounds;
 import com.ait.lienzo.client.core.types.DragBounds.DragBoundsJSO;
@@ -646,19 +645,6 @@ public class Attributes
         put(Attribute.CORNER_RADIUS.getProperty(), cornerRadius);
     }
 
-    public final void setSizeConstraints(final BoundingBox boundingBox)
-    {
-        if (null != boundingBox)
-        {
-            put(Attribute.SIZE_CONSTRAINTS.getProperty(), boundingBox.getJSO());
-        }
-        else
-        {
-            remove(Attribute.SIZE_CONSTRAINTS.getProperty());
-        }
-    }
-
-
     public final void setAlpha(double alpha)
     {
         if (alpha < 0)
@@ -800,6 +786,22 @@ public class Attributes
     public final void setHeight(final double height)
     {
         put(Attribute.HEIGHT.getProperty(), height);
+    }
+
+    public final void setMinWidth(final double minWidth) {
+        put(Attribute.MIN_WIDTH.getProperty(), minWidth);
+    }
+
+    public final void setMaxWidth(final double maxWidth) {
+        put(Attribute.MAX_WIDTH.getProperty(), maxWidth);
+    }
+
+    public final void setMinHeight(final double minHeight) {
+        put(Attribute.MIN_HEIGHT.getProperty(), minHeight);
+    }
+
+    public final void setMaxHeight(final double maxHeight) {
+        put(Attribute.MAX_HEIGHT.getProperty(), maxHeight);
     }
 
     public final void setPoints(final Point2DArray points)
@@ -1069,19 +1071,6 @@ public class Attributes
         return getDouble(Attribute.CORNER_RADIUS.getProperty());
     }
 
-    public final BoundingBox getSizeConstraints()
-    {
-        final JavaScriptObject sizeConstraints = getObject(Attribute.SIZE_CONSTRAINTS.getProperty());
-
-        if (null != sizeConstraints)
-        {
-            final BoundingBox.BoundingBoxJSO bbjso = sizeConstraints.cast();
-
-            return new BoundingBox(bbjso);
-        }
-        return null;
-    }
-
     public final double getWidth()
     {
         return getDouble(Attribute.WIDTH.getProperty());
@@ -1090,6 +1079,22 @@ public class Attributes
     public final double getHeight()
     {
         return getDouble(Attribute.HEIGHT.getProperty());
+    }
+
+    public final Double getMinWidth() {
+        return getDouble(Attribute.MIN_WIDTH.getProperty());
+    }
+
+    public final Double getMaxWidth() {
+        return getDouble(Attribute.MAX_WIDTH.getProperty());
+    }
+
+    public final Double getMinHeight() {
+        return getDouble(Attribute.MIN_HEIGHT.getProperty());
+    }
+
+    public final Double getMaxHeight() {
+        return getDouble(Attribute.MAX_HEIGHT.getProperty());
     }
 
     public final int getStarPoints()
