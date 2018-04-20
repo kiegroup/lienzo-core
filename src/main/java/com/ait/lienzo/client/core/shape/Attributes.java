@@ -788,20 +788,52 @@ public class Attributes
         put(Attribute.HEIGHT.getProperty(), height);
     }
 
-    public final void setMinWidth(final double minWidth) {
-        put(Attribute.MIN_WIDTH.getProperty(), minWidth);
+    public final void setMinWidth(final Double minWidth)
+    {
+        if (null != minWidth)
+        {
+            put(Attribute.MIN_WIDTH.getProperty(), minWidth);
+        }
+        else
+        {
+            remove(Attribute.MIN_WIDTH.getProperty());
+        }
     }
 
-    public final void setMaxWidth(final double maxWidth) {
-        put(Attribute.MAX_WIDTH.getProperty(), maxWidth);
+    public final void setMaxWidth(final Double maxWidth)
+    {
+        if (null != maxWidth)
+        {
+            put(Attribute.MAX_WIDTH.getProperty(), maxWidth);
+        }
+        else
+        {
+            remove(Attribute.MAX_WIDTH.getProperty());
+        }
     }
 
-    public final void setMinHeight(final double minHeight) {
-        put(Attribute.MIN_HEIGHT.getProperty(), minHeight);
+    public final void setMinHeight(final Double minHeight)
+    {
+        if (null != minHeight)
+        {
+            put(Attribute.MIN_HEIGHT.getProperty(), minHeight);
+        }
+        else
+        {
+            remove(Attribute.MIN_HEIGHT.getProperty());
+        }
     }
 
-    public final void setMaxHeight(final double maxHeight) {
-        put(Attribute.MAX_HEIGHT.getProperty(), maxHeight);
+    public final void setMaxHeight(final Double maxHeight)
+    {
+        if (null != maxHeight)
+        {
+            put(Attribute.MAX_HEIGHT.getProperty(), maxHeight);
+        }
+        else
+        {
+            remove(Attribute.MAX_HEIGHT.getProperty());
+        }
     }
 
     public final void setPoints(final Point2DArray points)
@@ -1082,19 +1114,23 @@ public class Attributes
     }
 
     public final Double getMinWidth() {
-        return getDouble(Attribute.MIN_WIDTH.getProperty());
+        double minWidth = getDouble(Attribute.MIN_WIDTH.getProperty());
+        return minWidth == 0 ? null : minWidth;
     }
 
     public final Double getMaxWidth() {
-        return getDouble(Attribute.MAX_WIDTH.getProperty());
+        double maxWidth = getDouble(Attribute.MAX_WIDTH.getProperty());
+        return maxWidth == 0 ? null : maxWidth;
     }
 
     public final Double getMinHeight() {
-        return getDouble(Attribute.MIN_HEIGHT.getProperty());
+        double minHeight = getDouble(Attribute.MIN_HEIGHT.getProperty());
+        return minHeight == 0 ? null : minHeight;
     }
 
     public final Double getMaxHeight() {
-        return getDouble(Attribute.MAX_HEIGHT.getProperty());
+        double maxHeight = getDouble(Attribute.MAX_HEIGHT.getProperty());
+        return maxHeight == 0 ? null : maxHeight;
     }
 
     public final int getStarPoints()

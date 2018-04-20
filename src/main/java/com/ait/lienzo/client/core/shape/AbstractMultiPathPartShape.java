@@ -226,13 +226,8 @@ public abstract class AbstractMultiPathPartShape<T extends AbstractMultiPathPart
         }
     }
 
-    public T setMinWidth(Double minWidth) {
-        if (minWidth != null) {
-            getAttributes().setMinWidth(minWidth);
-        } else {
-            getAttributes().remove(Attribute.MIN_WIDTH.getProperty());
-        }
-
+    public T setMinWidth(final Double minWidth) {
+        getAttributes().setMinWidth(minWidth);
         return refresh();
     }
 
@@ -244,13 +239,8 @@ public abstract class AbstractMultiPathPartShape<T extends AbstractMultiPathPart
         }
     }
 
-    public T setMaxWidth(Double maxWidth) {
-        if (maxWidth != null) {
-            getAttributes().setMaxWidth(maxWidth);
-        } else {
-            getAttributes().remove(Attribute.MAX_WIDTH.getProperty());
-        }
-
+    public T setMaxWidth(final Double maxWidth) {
+        getAttributes().setMaxWidth(maxWidth);
         return refresh();
     }
 
@@ -262,13 +252,8 @@ public abstract class AbstractMultiPathPartShape<T extends AbstractMultiPathPart
         }
     }
 
-    public T setMinHeight(Double minHeight) {
-        if (minHeight != null) {
-            getAttributes().setMinHeight(minHeight);
-        } else {
-            getAttributes().remove(Attribute.MIN_HEIGHT.getProperty());
-        }
-
+    public T setMinHeight(final Double minHeight) {
+        getAttributes().setMinHeight(minHeight);
         return refresh();
     }
 
@@ -280,13 +265,8 @@ public abstract class AbstractMultiPathPartShape<T extends AbstractMultiPathPart
         }
     }
 
-    public T setMaxHeight(Double maxHeight) {
-        if (maxHeight != null) {
-            getAttributes().setMaxHeight(maxHeight);
-        } else {
-            getAttributes().remove(Attribute.MAX_HEIGHT.getProperty());
-        }
-
+    public T setMaxHeight(final Double maxHeight) {
+        getAttributes().setMaxHeight(maxHeight);
         return refresh();
     }
 
