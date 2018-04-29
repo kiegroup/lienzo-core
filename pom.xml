@@ -3,9 +3,30 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
 	xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>com.ahome-it</groupId>
+	<groupId>org.kie</groupId>
 	<artifactId>lienzo-core</artifactId>
-	<version>2.0.295-RELEASE</version>
+	<version>7.8.0-SNAPSHOT</version>
+	<name>[KIE] Lienzo - Core Framework</name>
+	<description>[KIE] Lienzo - Core Framework</description>
+        <url>http://www.kiegroup.org</url>
+        <inceptionYear>2001</inceptionYear>
+        <organization>
+          <name>JBoss by Red Hat</name>
+          <url>http://www.jboss.org/</url>
+        </organization>
+        <licenses>
+          <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+          </license>
+        </licenses>
+        <developers>
+          <developer>
+            <name>All developers are listed on the team website</name>
+            <url>http://www.drools.org/community/team.html</url>
+          </developer>
+        </developers>
 	<dependencies>
 		<dependency>
 			<groupId>com.ahome-it</groupId>
@@ -31,21 +52,25 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 
-	<repositories>
-		<repository>
-			<id>sonatype</id>
-			<url>https://oss.sonatype.org/content/repositories/snapshots/</url>
-		</repository>
+	<scm>
+          <connection>scm:git:https://github.com/kiegroup/lienzo-core.git</connection>
+          <developerConnection>scm:git:git@github.com:kiegroup/lienzo-core.git</developerConnection>
+          <url>https://github.com/kiegroup/lienzo-core</url>
+        </scm>
 
-		<repository>
-			<id>google-snapshots</id>
-			<name>Google Snapshots</name>
-			<url>https://oss.sonatype.org/content/repositories/google-snapshots/</url>
-			<releases><enabled>false</enabled></releases>
-			<snapshots><enabled>true</enabled></snapshots>
-		</repository>
-	</repositories>
-
+	<distributionManagement>
+	  <repository>
+	    <id>jboss-public-repository-group</id>
+	    <name>JBoss Public Repository Group</name>
+	    <url>https://repository.jboss.org/nexus/content/groups/public/</url>
+	  </repository>
+	  <snapshotRepository>
+	    <id>jboss-snapshots-repository</id>
+	    <name>JBoss Snapshot Repository</name>
+	    <url>https://repository.jboss.org/nexus/content/repositories/snapshots/</url>
+	  </snapshotRepository>
+	</distributionManagement>
+	
 	<build>
 		<resources>
 			<!-- Include src/main/java in order not to break the Eclipse GWT plug-in -->
@@ -68,6 +93,19 @@
 					<target>1.7</target>
 				</configuration>
 			</plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>3.0.1</version>
+                <executions>
+                  <execution>
+                    <id>attach-sources</id>
+                    <goals>
+                      <goal>jar</goal>
+                    </goals>
+                  </execution>
+                </executions>
+            </plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>

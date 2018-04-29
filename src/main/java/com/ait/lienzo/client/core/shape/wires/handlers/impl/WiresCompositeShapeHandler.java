@@ -54,11 +54,16 @@ public class WiresCompositeShapeHandler
         }
 
         boolean shouldRestore = true;
-        if (shapeControl.isAllowed()) {
-            final WiresContainer parent = shapeControl.getSharedParent();
-            if (null != parent && parent instanceof WiresShape) {
+
+        final WiresContainer parent = shapeControl.getSharedParent();
+        if (null != parent && parent instanceof WiresShape) {
+            if (shapeControl.isAllowed()) {
                 highlight.highlight((WiresShape) parent,
                                     PickerPart.ShapePart.BODY);
+                shouldRestore = false;
+            } else {
+                highlight.error((WiresShape) parent,
+                                PickerPart.ShapePart.BODY);
                 shouldRestore = false;
             }
         }
@@ -71,10 +76,14 @@ public class WiresCompositeShapeHandler
 
     @Override
     protected void doOnNodeDragEnd(NodeDragEndEvent event) {
-        final int dx = event.getDragContext().getDx();
-        final int dy = event.getDragContext().getDy();
-        shapeControl.onMove(dx,
-                            dy);
+
+        final Point2D distanceAdjusted = event.getDragContext().getDistanceAdjusted();
+        final Double adjustedX = distanceAdjusted.getX();
+        final Double adjustedY = distanceAdjusted.getY();
+        final int dx = adjustedX.intValue();
+        final int dy = adjustedY.intValue();
+
+        shapeControl.onMove(dx, dy);
 
         if (shapeControl.onMoveComplete() && shapeControl.accept()) {
             shapeControl.execute();

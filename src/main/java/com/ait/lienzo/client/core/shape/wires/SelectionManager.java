@@ -174,6 +174,11 @@ public class SelectionManager implements NodeMouseDoubleClickHandler, NodeMouseC
                                          wiresManager);
     }
 
+    protected boolean isSelectionCreationInProcess()
+    {
+        return m_selectionCreationInProcess;
+    }
+
     public void setSelectionShapeProvider(SelectionShapeProvider m_selectionShapeProvider) {
         this.m_selectionShapeProvider = m_selectionShapeProvider;
     }
@@ -255,23 +260,7 @@ public class SelectionManager implements NodeMouseDoubleClickHandler, NodeMouseC
             {
                 if (m_selectionCreationInProcess)
                 {
-                    double width = event.getX() - m_start.getX();
-                    double height = event.getY() - m_start.getY();
-                    // if either width or height is zero, you won't see the line being drawn, so ensure atleast 1px separation
-                    if ( width == 0 )
-                    {
-                        width += 1;
-                    }
-                    if ( height == 0 )
-                    {
-                        height += 1;
-                    }
-                    drawSelectionShape(m_start.getX(),
-                                       m_start.getY(),
-                                       width,
-                                       height,
-                                       m_layer.getViewport().getOverLayer());
-                    m_layer.getViewport().getOverLayer().draw();
+                    drawSelectionShape(event);
                     return false;
                 }
                 else
@@ -286,6 +275,36 @@ public class SelectionManager implements NodeMouseDoubleClickHandler, NodeMouseC
                 return selectionEventHandlingComplete(event);
             }
             return true;
+        }
+
+        void drawSelectionShape(final MouseEvent<? extends EventHandler> event)
+        {
+            final double relativeStartX = getSelectionManager().relativeStartX();
+            final double relativeStartY = getSelectionManager().relativeStartY();
+            final double relativeEventX = (event.getX() - getViewportTransform().getTranslateX()) / getViewportTransform().getScaleX();
+            final double relativeEventY = (event.getY() - getViewportTransform().getTranslateY()) / getViewportTransform().getScaleY();
+            final Layer overLayer = m_layer.getViewport().getOverLayer();
+
+            double width = relativeEventX - relativeStartX;
+            double height = relativeEventY - relativeStartY;
+
+            // if either width or height is zero, you won't see the line being drawn, so ensure at least 1px separation
+            if ( width == 0 )
+            {
+                width += 1;
+            }
+            if ( height == 0 )
+            {
+                height += 1;
+            }
+
+            getSelectionManager().drawSelectionShape(relativeStartX, relativeStartY, width, height, overLayer);
+            overLayer.draw();
+        }
+
+        SelectionManager getSelectionManager()
+        {
+            return SelectionManager.this;
         }
 
         private boolean selectionEventHandlingComplete(MouseEvent<? extends EventHandler> event) {
@@ -339,6 +358,14 @@ public class SelectionManager implements NodeMouseDoubleClickHandler, NodeMouseC
         }
     }
 
+    public void rebuildSelectionArea() {
+        if (m_selected.isEmpty()) {
+            return;
+        }
+        m_selected.rebuildBoundingBox();
+        drawSelectionShapeForSelection();
+    }
+
     private void drawSelectionShapeForSelection()
     {
         if (m_selected.isEmpty())
@@ -386,6 +413,10 @@ public class SelectionManager implements NodeMouseDoubleClickHandler, NodeMouseC
 
     @Override public void onNodeMouseDown(NodeMouseDownEvent event)
     {
+        if (!event.isButtonLeft()) {
+            return;
+        }
+
         Node<?> node = m_layer.getViewport().findShapeAtPoint(event.getX(), event.getY());
         if (node == null)
         {
@@ -397,7 +428,6 @@ public class SelectionManager implements NodeMouseDoubleClickHandler, NodeMouseC
             destroySelectionShape();
             m_layer.draw();
         }
-
     }
 
     public void clearSelection() {
@@ -406,11 +436,13 @@ public class SelectionManager implements NodeMouseDoubleClickHandler, NodeMouseC
 
     private void clearIfSelection()
     {
-        m_selected.clear();
-        m_selected.notifyListener();
-        destroySelectionShape();
-        m_layer.batch();
-        m_layer.getViewport().getOverLayer().batch();
+        if (!isSelectionHandlerRunning()) {
+            destroySelectionShape();
+            m_selected.clear();
+            m_selected.notifyListener();
+            m_layer.batch();
+            m_layer.getViewport().getOverLayer().batch();
+        }
     }
 
     public void drawSelectionShape(double x,
@@ -427,12 +459,12 @@ public class SelectionManager implements NodeMouseDoubleClickHandler, NodeMouseC
         if (sw < 0)
         {
             sw = Math.abs(sw);
-            sx = m_start.getX() - sw;
+            sx = relativeStartX() - sw;
         }
         if (sh < 0)
         {
             sh = Math.abs(sh);
-            sy = m_start.getY() - sh;
+            sy = relativeStartY() - sh;
         }
         sw = sw + (padding * 2);
         sh = sh + (padding * 2);
@@ -460,6 +492,28 @@ public class SelectionManager implements NodeMouseDoubleClickHandler, NodeMouseC
         m_selectionShapeProvider
                 .setLocation(location)
                 .setSize(sw, sh);
+    }
+
+    double relativeStartX()
+    {
+        final Transform transform = getViewportTransform();
+        return (getStart().getX() - transform.getTranslateX()) / transform.getScaleX();
+    }
+
+    double relativeStartY()
+    {
+        final Transform transform = getViewportTransform();
+        return (getStart().getY() - transform.getTranslateY()) / transform.getScaleY();
+    }
+
+    Point2D getStart()
+    {
+        return m_start;
+    }
+
+    private Transform getViewportTransform()
+    {
+        return m_layer.getViewport().getTransform();
     }
 
     public static class ChangedItems
@@ -851,8 +905,7 @@ public class SelectionManager implements NodeMouseDoubleClickHandler, NodeMouseC
                 if ( !isEmpty() )
                 {
                     selectionGroup = true;
-                    rebuildBoundingBox();
-                    m_selManager.drawSelectionShapeForSelection();
+                    m_selManager.rebuildSelectionArea();
                 }
                 else
                 {
@@ -952,7 +1005,7 @@ public class SelectionManager implements NodeMouseDoubleClickHandler, NodeMouseC
             }
             else
             {
-                Point2DArray intersections = Geometry.getIntersectPolyLinePath(points, connector.getLine().getPathPartList(), true);
+                Point2DArray intersections = Geometry.getIntersectPolyLinePath(points, connector.getLine().asShape().getPathPartList(), true);
                 if (intersections!=null && intersections.size()> 0)
                 {
                     addConnector(connector, externallyConnected, box, nodeBox);
@@ -1070,6 +1123,11 @@ public class SelectionManager implements NodeMouseDoubleClickHandler, NodeMouseC
         }
     }
 
+    private boolean isSelectionHandlerRunning() {
+        return null != m_selectionDragHandler &&
+                m_selectionDragHandler.isRunning();
+    }
+
     public void destroy()
     {
         if (m_selectMouseDownHandlerReg != null)
@@ -1127,12 +1185,14 @@ public class SelectionManager implements NodeMouseDoubleClickHandler, NodeMouseC
         private final WiresCompositeShapeHandler multipleShapeHandler;
         private int adjustX = 0;
         private int adjustY = 0;
+        private boolean running;
 
         public SelectionDragHandler(SelectionManager selectionManager) {
             this.m_selectionManager = selectionManager;
             this.multipleShapeHandler = new WiresCompositeShapeHandler(m_selectionManager.m_shapeControl,
                                                                        getControlFactory().newShapeHighlight(getWiresManager()),
                                                                        getWiresManager());
+            running = false;
         }
 
         @Override
@@ -1159,6 +1219,7 @@ public class SelectionManager implements NodeMouseDoubleClickHandler, NodeMouseC
 
         @Override
         public void startDrag(DragContext dragContext) {
+            running = true;
             adjustX = 0;
             adjustY = 0;
             multipleShapeHandler.startDrag(dragContext);
@@ -1166,6 +1227,7 @@ public class SelectionManager implements NodeMouseDoubleClickHandler, NodeMouseC
 
         @Override
         public boolean adjust(Point2D dxy) {
+            running = true;
             boolean adjusted = multipleShapeHandler.adjust(dxy);
             if (!adjusted) {
                 adjustX = (int) dxy.getX();
@@ -1179,18 +1241,15 @@ public class SelectionManager implements NodeMouseDoubleClickHandler, NodeMouseC
 
         @Override public void onNodeDragEnd(NodeDragEndEvent event)
         {
-
             updateSelectionShapeForExternallyConnectedConnectors(adjustX, adjustY, m_selectionManager.m_startBoundingBox);
             if ( m_selectionManager.m_startBoundingBox != null)
             {
                 m_selectionManager.m_startBoundingBox.offset(adjustX, adjustY);
             }
-
             m_selectionManager.m_ignoreMouseClick = true; // need to ignore the click event after
-
             multipleShapeHandler.onNodeDragEnd(event);
-
-            m_selectionManager.m_layer.batch();
+            m_selectionManager.rebuildSelectionArea();
+            running = false;
         }
 
         private void updateSelectionShapeForExternallyConnectedConnectors(int dx,
@@ -1217,9 +1276,12 @@ public class SelectionManager implements NodeMouseDoubleClickHandler, NodeMouseC
             return getWiresManager().getControlFactory();
         }
 
+        private boolean isRunning() {
+            return running;
+        }
     }
 
-    private Shape<?> getSelectionShape() {
+    public Shape<?> getSelectionShape() {
         return m_selectionShapeProvider.getShape();
     }
 
