@@ -3,6 +3,7 @@ package com.ait.lienzo.client.core.shape.wires.handlers.impl;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import com.ait.lienzo.client.core.shape.MultiPath;
 import com.ait.lienzo.client.core.shape.wires.IDockingAcceptor;
 import com.ait.lienzo.client.core.shape.wires.MagnetManager;
 import com.ait.lienzo.client.core.shape.wires.PickerPart;
@@ -23,10 +24,10 @@ import com.google.gwt.event.shared.HandlerRegistration;
 public class WiresDockingControlImpl extends AbstractWiresParentPickerControl
         implements WiresDockingControl {
 
-    private Point2D initialPathLocation;
-    private Point2D intersection;
-    private Point2D dockPosition;
-    private final Collection<HandlerRegistration> handlerRegistrations = new ArrayList<>();
+    private Point2D                               m_initialPathLocation;
+    private Point2D                               m_intersection;
+    private Point2D                               m_dockPosition;
+    private final Collection<HandlerRegistration> m_handlerRegistrations = new ArrayList<>();
 
     public WiresDockingControlImpl(WiresShape shape,
                                    ColorMapBackedPicker.PickerOptions pickerOptions) {
@@ -43,7 +44,7 @@ public class WiresDockingControlImpl extends AbstractWiresParentPickerControl
                                    double y) {
         super.beforeMoveStart(x,
                               y);
-        initialPathLocation = getShape().getPath().getComputedLocation();
+        m_initialPathLocation = getShape().getPath().getComputedLocation();
     }
 
     @Override
@@ -72,16 +73,16 @@ public class WiresDockingControlImpl extends AbstractWiresParentPickerControl
                                 double dy) {
         super.afterMove(dx,
                         dy);
-        intersection = null;
+        m_intersection = null;
         if (isAllow()) {
             final Point2D location = getParentPickerControl().getCurrentLocation();
             final Point2D absLoc = getParent().getComputedLocation();// convert to local xy of the path
-            this.intersection =
+            this.m_intersection =
                     Geometry.findIntersection((int) (location.getX() - absLoc.getX()),
                                               (int) (location.getY() - absLoc.getY()),
                                               ((WiresShape) getParent()).getPath());
         }
-        return null != this.intersection;
+        return null != this.m_intersection;
     }
 
     @Override
@@ -92,24 +93,22 @@ public class WiresDockingControlImpl extends AbstractWiresParentPickerControl
 
     @Override
     public void clear() {
-        initialPathLocation = null;
-        intersection = null;
+        m_initialPathLocation = null;
+        m_intersection = null;
     }
 
     private void removeHandlers() {
-        for (HandlerRegistration registration : handlerRegistrations) {
+        for (HandlerRegistration registration : m_handlerRegistrations) {
             registration.removeHandler();
         }
-        handlerRegistrations.clear();
+        m_handlerRegistrations.clear();
     }
 
     @Override
     public Point2D getAdjust() {
-        if (isEnabled() && intersection != null) {
-            dockPosition = calculateCandidateLocation(getShape(), getCloserMagnet(getShape(), getParent(), false));
-            final Point2D absLoc = getParent().getComputedLocation();
-            return new Point2D(absLoc.getX() + dockPosition.getX() - initialPathLocation.getX(),
-                               absLoc.getY() + dockPosition.getY() - initialPathLocation.getY());
+        if (isEnabled() && m_intersection != null) {
+            m_dockPosition = calculateAbsCandidateLocation(getShape(), getCloserMagnet(getShape(), getParent(), false));
+            return m_dockPosition.sub(m_initialPathLocation);
         }
         return new Point2D(0, 0);
     }
@@ -136,7 +135,7 @@ public class WiresDockingControlImpl extends AbstractWiresParentPickerControl
 
     @Override
     public Point2D getCandidateLocation() {
-        return dockPosition;
+        return m_dockPosition;
     }
 
     @Override
@@ -171,11 +170,12 @@ public class WiresDockingControlImpl extends AbstractWiresParentPickerControl
                                                  getShape());
     }
 
-    private Point2D calculateCandidateLocation(WiresShape shape, WiresMagnet shapeMagnet) {
-        final Point2D location = new Point2D(shapeMagnet.getX(), shapeMagnet.getY());
+    private Point2D calculateAbsCandidateLocation(WiresShape shape, WiresMagnet shapeMagnet) {
+        final Point2D trgLocation = new Point2D(shapeMagnet.getX(), shapeMagnet.getY());
+        final BoundingBox shapeBB = shape.getPath().getBoundingBox();
         final BoundingBox box = shape.getPath().getBoundingBox();
-        final double newX = location.getX() - (box.getWidth() / 2);
-        final double newY = location.getY() - (box.getHeight() / 2);
+        final double newX = trgLocation.getX() - shapeBB.getMinX() - (box.getWidth() / 2);
+        final double newY = trgLocation.getY() - shapeBB.getMinY() - (box.getHeight() / 2);
         return new Point2D(newX, newY);
     }
 
@@ -238,12 +238,13 @@ public class WiresDockingControlImpl extends AbstractWiresParentPickerControl
     @Override
     public void dock(final WiresShape shape,
                      final WiresContainer parent,
-                     final Point2D location) {
+                     final Point2D absLocation) {
         if (null != shape.getDockedTo()) {
             undock(shape, shape.getDockedTo());
         }
 
-        shape.setLocation(location);
+        Point2D relLocation = absLocation.sub(parent.getComputedLocation());
+        shape.setLocation(relLocation);
         shape.shapeMoved();
         shape.removeFromParent();
         parent.add(shape);
@@ -257,18 +258,18 @@ public class WiresDockingControlImpl extends AbstractWiresParentPickerControl
         }
 
         //adjust the location if necessary
-        final Point2D adjust = calculateCandidateLocation(shape, magnet);
-        if (!location.equals(adjust)) {
-            shape.setLocation(adjust);
+        final Point2D newAbsLocation = calculateAbsCandidateLocation(shape, magnet);
+        if (!absLocation.equals(newAbsLocation)) {
+            shape.setLocation(newAbsLocation.sub(parent.getComputedLocation()));
             shape.shapeMoved();
         }
 
         //recalculate location during shape resizing
-        handlerRegistrations.add(parentWireShape.addWiresResizeStepHandler(new WiresResizeStepHandler() {
+        m_handlerRegistrations.add(parentWireShape.addWiresResizeStepHandler(new WiresResizeStepHandler() {
             @Override
             public void onShapeResizeStep(WiresResizeStepEvent event) {
                 final WiresMagnet currentMagnet = parentWireShape.getMagnets().getMagnet(magnet.getIndex());
-                shape.setLocation(calculateCandidateLocation(shape, currentMagnet));
+                shape.setLocation(calculateAbsCandidateLocation(shape, currentMagnet));
                 shape.shapeMoved();
             }
         }));

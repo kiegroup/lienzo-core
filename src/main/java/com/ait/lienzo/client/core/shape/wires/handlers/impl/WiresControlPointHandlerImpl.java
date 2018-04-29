@@ -42,7 +42,10 @@ public class WiresControlPointHandlerImpl implements WiresControlPointHandler {
     public void onNodeDragMove(NodeDragMoveEvent event) {
         IPrimitive<?> primitive = (IPrimitive<?>) event.getSource();
         Point2D adjust = m_connectorControl.adjustControlPointAt(primitive.getX(), primitive.getY(), event.getX(), event.getY());
-        primitive.setX(adjust.getX());
-        primitive.setY(adjust.getY());
+        if (adjust != null)
+        {
+            primitive.setX(adjust.getX());
+            primitive.setY(adjust.getY());
+        }
     }
 }

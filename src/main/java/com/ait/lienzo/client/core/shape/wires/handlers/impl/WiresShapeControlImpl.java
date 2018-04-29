@@ -142,7 +142,7 @@ public class WiresShapeControlImpl
         if (isDockAdjust) {
             final Point2D dadjust = m_dockingAndControl.getAdjust();
             double adjustDistance = Geometry.distance(dx, dy, dadjust.getX(), dadjust.getY());
-            if (adjustDistance > getWiresManager().getDockingAcceptor().getHotspotSize()) {
+            if (adjustDistance < getWiresManager().getDockingAcceptor().getHotspotSize()) {
                 dxy.setX(dadjust.getX());
                 dxy.setY(dadjust.getY());
             }
