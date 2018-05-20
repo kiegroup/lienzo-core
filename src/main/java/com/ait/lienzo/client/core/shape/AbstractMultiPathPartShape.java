@@ -71,6 +71,7 @@ public abstract class AbstractMultiPathPartShape<T extends AbstractMultiPathPart
 {
     private final NFastArrayList<PathPartList> m_points = new NFastArrayList<PathPartList>();
     private NFastArrayList<PathPartList> m_cornerPoints = new NFastArrayList<PathPartList>();
+    protected BoundingBox                      m_box;
 
     protected AbstractMultiPathPartShape(final ShapeType type)
     {
@@ -85,6 +86,11 @@ public abstract class AbstractMultiPathPartShape<T extends AbstractMultiPathPart
     @Override
     public BoundingBox getBoundingBox()
     {
+        if (m_box != null)
+        {
+            return m_box;
+        }
+
         NFastArrayList<PathPartList> points = m_points;
 
         if (getCornerRadius() > 0)
@@ -95,15 +101,21 @@ public abstract class AbstractMultiPathPartShape<T extends AbstractMultiPathPart
 
         if (size < 1)
         {
-            return new BoundingBox(0, 0, 0, 0);
+            m_box = new BoundingBox(0, 0, 0, 0);
+            return m_box;
         }
-        final BoundingBox bbox = new BoundingBox();
+        m_box = new BoundingBox();
 
         for (int i = 0; i < size; i++)
         {
-            bbox.add(points.get(i).getBoundingBox());
+            m_box.add(points.get(i).getBoundingBox());
         }
-        return bbox;
+        return m_box;
+    }
+
+    public void resetBoundingBox()
+    {
+        m_box = null;
     }
 
     @Override
@@ -121,6 +133,8 @@ public abstract class AbstractMultiPathPartShape<T extends AbstractMultiPathPart
             m_points.get(i).clear();
         }
         m_points.clear();
+
+        resetBoundingBox();
 
         return cast();
     }
@@ -553,7 +567,7 @@ public abstract class AbstractMultiPathPartShape<T extends AbstractMultiPathPart
 
     private static class PointControlHandle extends AbstractControlHandle
     {
-        private final Shape<?>                     m_shape;
+        private final AbstractMultiPathPartShape   m_shape;
 
         private final NFastArrayList<PathPartList> m_listOfPaths;
 
@@ -565,7 +579,7 @@ public abstract class AbstractMultiPathPartShape<T extends AbstractMultiPathPart
 
         private final int                          m_entryIndex;
 
-        public PointControlHandle(Shape<?> prim, int pathIndex, int entryIndex, Shape<?> shape, NFastArrayList<PathPartList> listOfPaths, PathPartList plist, IControlHandleList hlist)
+        public PointControlHandle(Shape<?> prim, int pathIndex, int entryIndex, AbstractMultiPathPartShape shape, NFastArrayList<PathPartList> listOfPaths, PathPartList plist, IControlHandleList hlist)
         {
             m_shape = shape;
 
@@ -624,7 +638,7 @@ public abstract class AbstractMultiPathPartShape<T extends AbstractMultiPathPart
 
     public static class PointHandleDragHandler implements NodeDragStartHandler, NodeDragMoveHandler, NodeDragEndHandler
     {
-        protected final Shape<?>                      m_shape;
+        protected final AbstractMultiPathPartShape    m_shape;
 
         private final NFastArrayList<PathPartList>    m_listOfPaths;
 
@@ -636,7 +650,7 @@ public abstract class AbstractMultiPathPartShape<T extends AbstractMultiPathPart
 
         protected NFastArrayList<NFastDoubleArrayJSO> m_entries;
 
-        public PointHandleDragHandler(Shape<?> shape, NFastArrayList<PathPartList> listOfPaths, IControlHandleList chlist, Shape<?> prim, PointControlHandle handle)
+        public PointHandleDragHandler(AbstractMultiPathPartShape shape, NFastArrayList<PathPartList> listOfPaths, IControlHandleList chlist, Shape<?> prim, PointControlHandle handle)
         {
             m_shape = shape;
 
@@ -695,7 +709,7 @@ public abstract class AbstractMultiPathPartShape<T extends AbstractMultiPathPart
                         break;
                     }
                 }
-                m_shape.refresh();
+                m_shape.resetBoundingBox();
 
                 m_shape.getLayer().batch();
             }
@@ -712,6 +726,7 @@ public abstract class AbstractMultiPathPartShape<T extends AbstractMultiPathPart
                 {
                     list.resetBoundingBox();
                 }
+                m_shape.resetBoundingBox();
                 m_prim.setFillColor(ColorName.DARKRED);
 
                 m_prim.getLayer().draw();
