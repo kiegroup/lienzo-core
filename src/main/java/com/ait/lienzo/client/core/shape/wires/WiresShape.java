@@ -289,7 +289,7 @@ public class WiresShape extends WiresContainer
         }
     }
 
-    LayoutContainer getLayoutContainer()
+    public LayoutContainer getLayoutContainer()
     {
         return m_innerLayoutContainer;
     }
