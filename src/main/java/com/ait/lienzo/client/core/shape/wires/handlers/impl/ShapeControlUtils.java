@@ -51,10 +51,6 @@ public class ShapeControlUtils {
         }
     }
 
-    public static void updateNestedShapes(WiresShape shape) {
-        shape.shapeMoved();
-    }
-
     public static void updateSpecialConnections(WiresConnector[] connectors,
                                                 boolean isAcceptOp) {
         if (connectors == null) {

@@ -125,6 +125,7 @@ public class WiresContainer
     public WiresContainer setLocation(final Point2D p)
     {
         getGroup().setLocation(p);
+        shapeMoved();
         return this;
     }
 
