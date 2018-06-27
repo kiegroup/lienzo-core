@@ -20,17 +20,25 @@ public class Image
         extends Shape<Image>
         implements IDestroyable {
 
-    private ImageElementProxy imageProxy;
+    ImageElementProxy imageProxy;
 
     public Image(final String stripName,
                  final int index) {
         this(ImageStrips.encodeURL(stripName,
-                                   index));
+                                   index),
+             new ImageLoadCallback() {
+                 @Override
+                 public void onImageLoaded(Image image) {
+                     // Defaults to an empty callback, as the strip image has been already loaded
+                 }
+             });
     }
 
-    public Image(final String url) {
+    public Image(final String url,
+                 final ImageLoadCallback callback) {
         super(ShapeType.IMAGE);
-        setURL(url);
+        configure(url);
+        load(callback);
     }
 
     private Image(final JSONObject node,
@@ -38,13 +46,8 @@ public class Image
         super(ShapeType.IMAGE, node, ctx);
     }
 
-    String getURL() {
-        return getAttributes().getURL();
-    }
-
-    void setURL(final String url) {
-        getAttributes().setURL(url);
-        configure();
+    Image() {
+        super(ShapeType.IMAGE);
     }
 
     /**
@@ -145,11 +148,11 @@ public class Image
     /**
      * Returns the height of the destination region.
      * The default value is 0, which means it will use the clippedImageHeight.
-     * <p>
+     * <p/>
      * Setting this value will cause the image to be scaled.
      * This can be used to reduce the memory footprint of the Image
      * used in the selection layer.
-     * <p>
+     * <p/>
      * Note that further scaling can be achieved via the <code>scale</code>
      * or <code>transform</code> attributes, which apply to all Shapes.
      */
@@ -160,11 +163,11 @@ public class Image
     /**
      * Sets the height of the destination region.
      * The default value is 0, which means it will use the clippedImageHeight.
-     * <p>
+     * <p/>
      * Setting this value will cause the image to be scaled.
      * This can be used to reduce the memory footprint of the Image
      * used in the selection layer.
-     * <p>
+     * <p/>
      * Note that further scaling can be achieved via the <code>scale</code>
      * or <code>transform</code> attributes, which apply to all Shapes.
      */
@@ -200,7 +203,7 @@ public class Image
         return false;
     }
 
-    private void drawImage(final Context2D context) {
+    void drawImage(final Context2D context) {
         if (imageProxy.isLoaded()) {
 
             if (context.isSelection()) {
@@ -246,8 +249,8 @@ public class Image
         return _destinationHeight > 0 ? _destinationHeight : imageProxy.getHeight();
     }
 
-    private void configure() {
-        final String url = getAttributes().getURL();
+    Image configure(final String url) {
+        getAttributes().setURL(url);
         if (null != url && url.trim().length() > 0) {
             destroyProxy();
             if (ImageStrips.isURLValid(url)) {
@@ -260,11 +263,25 @@ public class Image
                 imageProxy = new ImageElementProxy();
                 restoreClipArea();
             }
-            if (!imageProxy.isLoaded()) {
-                imageProxy.load(url,
-                                loadCallback);
-            }
         }
+        return this;
+    }
+
+    Image load(final ImageLoadCallback callback) {
+        if (!imageProxy.isLoaded()) {
+            final String url = getAttributes().getURL();
+            imageProxy.load(url,
+                            new Runnable() {
+                                @Override
+                                public void run() {
+                                    callback.onImageLoaded(Image.this);
+                                    performBatch();
+                                }
+                            });
+        } else {
+            callback.onImageLoaded(Image.this);
+        }
+        return this;
     }
 
     private void configureClipArea(final ImageStrip strip,
@@ -296,14 +313,11 @@ public class Image
         return ImageStrip.Orientation.HORIZONTAL.equals(strip.getOrientation());
     }
 
-    private final Runnable loadCallback = new Runnable() {
-        @Override
-        public void run() {
-            if (null != getLayer()) {
-                getLayer().batch();
-            }
+    private void performBatch() {
+        if (null != getLayer()) {
+            getLayer().batch();
         }
-    };
+    }
 
     @Override
     public JSONObject toJSONObject() {
@@ -359,7 +373,13 @@ public class Image
         public void process(IJSONSerializable<?> node, ValidationContext ctx) throws ValidationException {
             if (node instanceof Image) {
                 final Image self = (Image) node;
-                self.configure();
+                self.configure(self.getAttributes().getURL())
+                    .load(new ImageLoadCallback() {
+                        @Override
+                        public void onImageLoaded(Image image) {
+                            image.performBatch();
+                        }
+                    });
             }
         }
     }

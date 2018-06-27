@@ -65,12 +65,17 @@ public class ImageStrips {
                      new Runnable() {
                          @Override
                          public void run() {
-                             strips.put(strip.getName(), strip);
-                             proxies.put(strip.getName(), handler);
+                             registerStrip(strip, handler);
                              loadCallback.run();
                          }
                          });
         return this;
+    }
+
+    void registerStrip(final ImageStrip strip,
+                      final ImageElementProxy handler) {
+        strips.put(strip.getName(), strip);
+        proxies.put(strip.getName(), handler);
     }
 
     public void remove(final ImageStrip strip) {
