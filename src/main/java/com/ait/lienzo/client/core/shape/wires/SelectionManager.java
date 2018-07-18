@@ -489,6 +489,7 @@ public class SelectionManager implements NodeMouseDoubleClickHandler, NodeMouseC
         m_selectionShapeProvider
                 .setLocation(location)
                 .setSize(sw, sh);
+        getSelectionShape().moveToTop();
     }
 
     double relativeStartX()
