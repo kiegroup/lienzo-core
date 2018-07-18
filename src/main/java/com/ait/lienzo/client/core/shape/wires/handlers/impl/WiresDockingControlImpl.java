@@ -11,6 +11,10 @@ import com.ait.lienzo.client.core.shape.wires.WiresLayer;
 import com.ait.lienzo.client.core.shape.wires.WiresMagnet;
 import com.ait.lienzo.client.core.shape.wires.WiresManager;
 import com.ait.lienzo.client.core.shape.wires.WiresShape;
+import com.ait.lienzo.client.core.shape.wires.event.WiresResizeEndEvent;
+import com.ait.lienzo.client.core.shape.wires.event.WiresResizeEndHandler;
+import com.ait.lienzo.client.core.shape.wires.event.WiresResizeStartEvent;
+import com.ait.lienzo.client.core.shape.wires.event.WiresResizeStartHandler;
 import com.ait.lienzo.client.core.shape.wires.event.WiresResizeStepEvent;
 import com.ait.lienzo.client.core.shape.wires.event.WiresResizeStepHandler;
 import com.ait.lienzo.client.core.shape.wires.handlers.WiresDockingControl;
@@ -25,7 +29,9 @@ public class WiresDockingControlImpl extends AbstractWiresParentPickerControl
 
     private Point2D initialPathLocation;
     private Point2D intersection;
-    private Point2D dockPosition;
+    private double  xRatio;
+    private double  yRatio;
+
     private final Collection<HandlerRegistration> handlerRegistrations = new ArrayList<>();
 
     public WiresDockingControlImpl(WiresShape shape,
@@ -43,6 +49,7 @@ public class WiresDockingControlImpl extends AbstractWiresParentPickerControl
                                    double y) {
         super.beforeMoveStart(x,
                               y);
+
         initialPathLocation = getShape().getPath().getComputedLocation();
     }
 
@@ -70,16 +77,19 @@ public class WiresDockingControlImpl extends AbstractWiresParentPickerControl
     @Override
     protected boolean afterMove(double dx,
                                 double dy) {
-        super.afterMove(dx,
-                        dy);
         intersection = null;
         if (isAllow()) {
-            final Point2D location = getParentPickerControl().getCurrentLocation();
-            final Point2D absLoc = getParent().getComputedLocation();// convert to local xy of the path
-            this.intersection =
-                    Geometry.findIntersection((int) (location.getX() - absLoc.getX()),
-                                              (int) (location.getY() - absLoc.getY()),
-                                              ((WiresShape) getParent()).getPath());
+            WiresShape shape = getShape();
+            WiresShape parent = (WiresShape) getParent();
+            final Point2D parentLocation = parent.getComputedLocation();
+            BoundingBox box = shape.getPath().getBoundingBox();
+
+
+            final double shapeX = initialPathLocation.getX() + dx + (box.getWidth() / 2) - parentLocation.getX();
+            final double shapeY = initialPathLocation.getY() + dy + (box.getHeight() / 2)- parentLocation.getY();
+
+            this.intersection = Geometry.findIntersection((int) shapeX, (int) shapeY,
+                                                          parent.getPath());
         }
         return null != this.intersection;
     }
@@ -106,10 +116,12 @@ public class WiresDockingControlImpl extends AbstractWiresParentPickerControl
     @Override
     public Point2D getAdjust() {
         if (isEnabled() && intersection != null) {
-            dockPosition = calculateCandidateLocation(getShape(), getCloserMagnet(getShape(), getParent(), false));
+            Point2D candidateLocation = getCandidateLocation();
             final Point2D absLoc = getParent().getComputedLocation();
-            return new Point2D(absLoc.getX() + dockPosition.getX() - initialPathLocation.getX(),
-                               absLoc.getY() + dockPosition.getY() - initialPathLocation.getY());
+            double dx = absLoc.getX() + candidateLocation.getX() - initialPathLocation.getX();
+            double dy = absLoc.getY() + candidateLocation.getY() - initialPathLocation.getY();
+            Point2D point = new Point2D(dx, dy);
+            return point;
         }
         return new Point2D(0, 0);
     }
@@ -125,8 +137,7 @@ public class WiresDockingControlImpl extends AbstractWiresParentPickerControl
                         getParent() instanceof WiresShape &&
                         getParentShapePart() == PickerPart.ShapePart.BORDER &&
                         (dockingAcceptor.dockingAllowed(getParent(),
-                                                        getShape())) &&
-                        null != getCloserMagnet(getShape(), getParent(), false);
+                                                        getShape()));
     }
 
     @Override
@@ -136,15 +147,21 @@ public class WiresDockingControlImpl extends AbstractWiresParentPickerControl
 
     @Override
     public Point2D getCandidateLocation() {
-        return dockPosition;
+        return getCandidateLocation(getShape());
+    }
+
+    private Point2D getCandidateLocation(WiresShape shape) {
+        BoundingBox box = shape.getPath().getBoundingBox();
+        double x = intersection.getX() - (box.getWidth() / 2);
+        double y = intersection.getY() -  (box.getHeight() / 2);
+        return new Point2D(x, y);
     }
 
     @Override
     public void execute() {
         if (isEnabled()) {
             dock(getShape(),
-                 getParent(),
-                 getCandidateLocation());
+                 getParent());
         }
     }
 
@@ -154,8 +171,7 @@ public class WiresDockingControlImpl extends AbstractWiresParentPickerControl
             if (getParentPickerControl().getShapeLocationControl().isStartDocked() &&
                     getParentPickerControl().getInitialParent() != getShape().getParent()) {
                 dock(getShape(),
-                     getParentPickerControl().getInitialParent(),
-                     getParentPickerControl().getShapeLocationControl().getShapeInitialLocation());
+                     getParentPickerControl().getInitialParent());
             }
         }
     }
@@ -171,105 +187,52 @@ public class WiresDockingControlImpl extends AbstractWiresParentPickerControl
                                                  getShape());
     }
 
-    private Point2D calculateCandidateLocation(WiresShape shape, WiresMagnet shapeMagnet) {
-        final Point2D location = new Point2D(shapeMagnet.getX(), shapeMagnet.getY());
-        final BoundingBox box = shape.getPath().getBoundingBox();
-        final double newX = location.getX() - (box.getWidth() / 2);
-        final double newY = location.getY() - (box.getHeight() / 2);
-        return new Point2D(newX, newY);
-    }
-
-    /**
-     * Return the closer magnet with preference to not overlap any docked shape
-     * @param shape
-     * @param parent
-     * @return the closer magnet
-     */
-    private WiresMagnet getCloserMagnet(WiresShape shape, WiresContainer parent) {
-        final WiresMagnet magnet = getCloserMagnet(shape, parent, false);
-        //in case there is no available magnet than overlap with the closer one to the shape
-        return (magnet != null ? magnet : getCloserMagnet(shape, parent, true));
-    }
-
-    /**
-     * Reurn the closer magnet
-     * @param shape
-     * @param parent
-     * @param allowOverlap should allow overlapping docked shape or not
-     * @return closer magnet or null if none are available
-     */
-    private WiresMagnet getCloserMagnet(WiresShape shape, WiresContainer parent, boolean allowOverlap) {
-        final WiresShape parentShape = (WiresShape) parent;
-        final MagnetManager.Magnets magnets = parentShape.getMagnets();
-        final Point2D shapeLocation = shape.getComputedLocation();
-        final Point2D shapeCenter = Geometry.findCenter(shape.getPath().getBoundingBox());
-        final double shapeX = shapeCenter.getX() + shapeLocation.getX();
-        final double shapeY = shapeCenter.getX() + shapeLocation.getY();
-        int magnetIndex = -1;
-        Double minDistance = null;
-
-        //not considering the zero magnet, that is the center.
-        for (int i = 1; i < magnets.size(); i++) {
-            WiresMagnet magnet = magnets.getMagnet(i);
-            //skip magnet that has shape over it
-            if (allowOverlap || !hasShapeOnMagnet(magnet, parentShape)) {
-                final double magnetX = magnet.getControl().getLocation().getX();
-                final double magnetY = magnet.getControl().getLocation().getY();
-                final double distance = Geometry.distance(magnetX, magnetY, shapeX, shapeY);
-                //getting shorter distance
-                if (minDistance == null || distance < minDistance) {
-                    minDistance = distance;
-                    magnetIndex = i;
-                }
-            }
-        }
-        return (magnetIndex > 0 ? magnets.getMagnet(magnetIndex) : null);
-    }
-
-    private boolean hasShapeOnMagnet(WiresMagnet magnet, WiresShape parent) {
-        for (WiresShape child : parent.getChildShapes().toList()) {
-            if (parent.equals(child.getDockedTo()) && !child.equals(getShape()) && magnet.equals(getCloserMagnet(child, parent, true))) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     @Override
     public void dock(final WiresShape shape,
-                     final WiresContainer parent,
-                     final Point2D location) {
+                     final WiresContainer parent) {
         if (null != shape.getDockedTo()) {
             undock(shape, shape.getDockedTo());
         }
 
-        shape.setLocation(location);
-        shape.shapeMoved();
         shape.removeFromParent();
         parent.add(shape);
         shape.setDockedTo(parent);
-
         final WiresShape parentWireShape = (WiresShape) parent;
-        final WiresMagnet magnet = getCloserMagnet(shape, parent, false);
-
-        if (null == magnet) {
-            throw new IllegalStateException("Cannot dock shape " + shape.uuid() + " there are no availabe dock points");
-        }
-
-        //adjust the location if necessary
-        final Point2D adjust = calculateCandidateLocation(shape, magnet);
-        if (!location.equals(adjust)) {
-            shape.setLocation(adjust);
-            shape.shapeMoved();
-        }
 
         //recalculate location during shape resizing
+        final BoundingBox shapeBox = shape.getPath().getBoundingBox();
+
+        xRatio = -1;
+        yRatio = -1;
         handlerRegistrations.add(parentWireShape.addWiresResizeStepHandler(new WiresResizeStepHandler() {
             @Override
             public void onShapeResizeStep(WiresResizeStepEvent event) {
-                final WiresMagnet currentMagnet = parentWireShape.getMagnets().getMagnet(magnet.getIndex());
-                shape.setLocation(calculateCandidateLocation(shape, currentMagnet));
+                if ( xRatio == -1 && yRatio == -1 )
+                {
+                    // this is a hack, to ensure it runs on the first before any resize computations
+                    BoundingBox parentBox = event.getShape().getPath().getBoundingBox();
+
+                    // make sure everything is shifted to have x/y greater than 0
+                    double normaliseX = parentBox.getX() >= 0 ? 0 : 0 - parentBox.getX();
+                    double normaliseY = parentBox.getY() >= 0 ? 0 : 0 - parentBox.getY();
+
+                    Point2D location = shape.getLocation();
+                    xRatio = Geometry.getRatio(location.getX() + normaliseX + (shapeBox.getWidth() / 2), parentBox.getX() + normaliseX, parentBox.getWidth());
+                    yRatio = Geometry.getRatio(location.getY() + normaliseY + (shapeBox.getHeight() / 2), parentBox.getY() + normaliseY, parentBox.getHeight());
+                }
+                shape.setLocation(new Point2D(event.getX() + (event.getWidth() * xRatio) - (shapeBox.getWidth() / 2),
+                                              event.getY() + (event.getHeight() * yRatio) - (shapeBox.getHeight() / 2)));
+
                 shape.shapeMoved();
+            }
+        }));
+        handlerRegistrations.add(parentWireShape.addWiresResizeEndHandler(new WiresResizeEndHandler() {
+            @Override
+            public void onShapeResizeEnd(WiresResizeEndEvent event) {
+                shape.setLocation(new Point2D(event.getX() + (event.getWidth() * xRatio) - (shapeBox.getWidth() / 2),
+                                              event.getY() + (event.getHeight() * yRatio) - (shapeBox.getHeight() / 2)));
+                shape.shapeMoved();
+                shape.getControl().getAlignAndDistributeControl().updateIndex();
             }
         }));
     }
