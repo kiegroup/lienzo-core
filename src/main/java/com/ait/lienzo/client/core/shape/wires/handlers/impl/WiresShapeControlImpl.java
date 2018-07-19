@@ -1,17 +1,24 @@
 package com.ait.lienzo.client.core.shape.wires.handlers.impl;
 
+import java.util.Collection;
+import java.util.Collections;
+
 import com.ait.lienzo.client.core.shape.wires.PickerPart;
 import com.ait.lienzo.client.core.shape.wires.WiresConnector;
 import com.ait.lienzo.client.core.shape.wires.WiresManager;
 import com.ait.lienzo.client.core.shape.wires.WiresShape;
-import com.ait.lienzo.client.core.shape.wires.handlers.*;
+import com.ait.lienzo.client.core.shape.wires.handlers.AlignAndDistributeControl;
+import com.ait.lienzo.client.core.shape.wires.handlers.MouseEvent;
+import com.ait.lienzo.client.core.shape.wires.handlers.WiresContainmentControl;
+import com.ait.lienzo.client.core.shape.wires.handlers.WiresDockingControl;
+import com.ait.lienzo.client.core.shape.wires.handlers.WiresMagnetsControl;
+import com.ait.lienzo.client.core.shape.wires.handlers.WiresParentPickerControl;
+import com.ait.lienzo.client.core.shape.wires.handlers.WiresShapeControl;
 import com.ait.lienzo.client.core.shape.wires.picker.ColorMapBackedPicker;
 import com.ait.lienzo.client.core.types.BoundingBox;
 import com.ait.lienzo.client.core.types.Point2D;
 import com.ait.lienzo.client.core.util.Geometry;
 import com.ait.tooling.nativetools.client.collection.NFastArrayList;
-
-import java.util.Collection;
 
 /**
  * The default WiresShapeControl implementation.
@@ -96,13 +103,15 @@ public class WiresShapeControlImpl
         //setting the child connectors that should be moved with the Shape
         if(getShape().getChildShapes() != null && !getShape().getChildShapes().isEmpty()) {
             m_connectors = setConnectorsMoveStart(ShapeControlUtils.getChildConnectorWithinShape(getShape()).values(), x, y);
+        } else {
+            m_connectors = Collections.emptyList();
         }
     }
 
     private Collection<WiresConnector> setConnectorsMoveStart(Collection<WiresConnector> connectors, double x, double y) {
         if (connectors != null && !connectors.isEmpty()) {
             for (WiresConnector connector : connectors) {
-                connector.getWiresConnectorHandler().getControl().onMoveStart(x, y);
+                connector.getControl().onMoveStart(x, y);
             }
         }
         return  connectors;
@@ -192,9 +201,15 @@ public class WiresShapeControlImpl
         m_adjust = dxy;
         parentPickerControl.onMoveAdjusted(m_adjust);
 
-        ShapeControlUtils.updateConnectors(m_connectors, dx, dy);
+        if (!m_connectors.isEmpty()) {
+            for (WiresConnector connector : m_connectors) {
+                connector.getControl().onMove(dx,
+                                            dy);
+            }
+        }
 
         shapeUpdated(false);
+
         ShapeControlUtils.checkForAndApplyLineSplice(getWiresManager(),
                                                      getShape());
 
@@ -264,6 +279,11 @@ public class WiresShapeControlImpl
         if (null != m_containmentControl) {
             m_containmentControl.clear();
         }
+        if (m_connectors != null && !m_connectors.isEmpty()) {
+            for (WiresConnector connector : m_connectors) {
+                connector.getControl().clear();
+            }
+        }
         clearState();
     }
 
@@ -286,10 +306,6 @@ public class WiresShapeControlImpl
     @Override
     public void onMouseClick(MouseEvent event) {
         parentPickerControl.onMouseClick(event);
-        if (getWiresManager().getSelectionManager() != null) {
-            getWiresManager().getSelectionManager().selected(getShape(),
-                                                             event.isShiftKeyDown());
-        }
     }
 
     @Override

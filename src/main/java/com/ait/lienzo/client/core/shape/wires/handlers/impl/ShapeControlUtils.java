@@ -1,6 +1,5 @@
 package com.ait.lienzo.client.core.shape.wires.handlers.impl;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -13,7 +12,6 @@ import com.ait.lienzo.client.core.shape.wires.WiresContainer;
 import com.ait.lienzo.client.core.shape.wires.WiresMagnet;
 import com.ait.lienzo.client.core.shape.wires.WiresManager;
 import com.ait.lienzo.client.core.shape.wires.WiresShape;
-import com.ait.lienzo.client.core.shape.wires.handlers.WiresConnectorHandler;
 import com.ait.lienzo.client.core.types.BoundingBox;
 import com.ait.lienzo.client.core.types.PathPartList;
 import com.ait.lienzo.client.core.types.Point2D;
@@ -99,20 +97,6 @@ public class ShapeControlUtils {
         return connectors;
     }
 
-    public static void updateConnectors(Collection<WiresConnector> connectors, double dx, double dy) {
-        if (connectors != null && !connectors.isEmpty()) {
-            // Update m_connectors and connections.
-            for (WiresConnector connector : connectors) {
-                WiresConnectorHandler handler = connector.getWiresConnectorHandler();
-                handler.getControl().move(dx,
-                                          dy,
-                                          true,
-                                          true);
-                WiresConnector.updateHeadTailForRefreshedConnector(connector);
-            }
-        }
-    }
-
     public static void updateNestedShapes(WiresShape shape) {
         shape.shapeMoved();
     }
@@ -167,7 +151,7 @@ public class ShapeControlUtils {
                     }
                 }
 
-                c.getWiresConnectorHandler().getControl().hideControlPoints();
+                c.getControl().hideControlPoints();
 
                 Point2DArray oldPoints = c.getLine().getPoint2DArray();
                 int firstSegmentIndex = Integer.MAX_VALUE;
@@ -177,7 +161,7 @@ public class ShapeControlUtils {
                     double y = p.getY() + absLoc.getY();
 
                     // get first and last segment, this can happen if shape straddles multiple segments of the line
-                    int pointIndex = WiresConnectorControlImpl.getIndexForSelectedSegment(c,
+                    int pointIndex = WiresConnector.getIndexForSelectedSegment(c,
                                                                                           (int) x,
                                                                                           (int) y,
                                                                                           oldPoints);
@@ -218,12 +202,14 @@ public class ShapeControlUtils {
                     WiresMagnet cmagnet = shape.getMagnets().getMagnet(1);
 
                     // check if isAllowed
-                    WiresConnectionControlImpl.allowedMagnetAndUpdateAutoConnections(headCon,
+                    WiresConnectionControlImpl.allowedMagnetAndUpdateAutoConnections(wiresManager,
+                                                                                     headCon,
                                                                                      true,
                                                                                      shape,
                                                                                      cmagnet,
                                                                                      false);
-                    accept = accept && WiresConnectionControlImpl.allowedMagnetAndUpdateAutoConnections(tailCon,
+                    accept = accept && WiresConnectionControlImpl.allowedMagnetAndUpdateAutoConnections(wiresManager,
+                                                                                                        tailCon,
                                                                                                         false,
                                                                                                         shape,
                                                                                                         cmagnet,
@@ -259,7 +245,8 @@ public class ShapeControlUtils {
                         tailCon2.setXOffset(tailCon.getXOffset()); //reset, if not already 0
                         tailCon2.setYOffset(tailCon.getYOffset());
                         tailCon2.setPoint(tailCon.getPoint());
-                        accept = accept && WiresConnectionControlImpl.allowedMagnetAndUpdateAutoConnections(headCon2,
+                        accept = accept && WiresConnectionControlImpl.allowedMagnetAndUpdateAutoConnections(wiresManager,
+                                                                                                            headCon2,
                                                                                                             true,
                                                                                                             shape,
                                                                                                             cmagnet,
@@ -282,7 +269,8 @@ public class ShapeControlUtils {
                     tailCon.setYOffset(0);
                     tailCon.setPoint(endPoint);
                     c.getLine().setPoint2DArray(newPoints1);
-                    accept = accept && WiresConnectionControlImpl.allowedMagnetAndUpdateAutoConnections(tailCon,
+                    accept = accept && WiresConnectionControlImpl.allowedMagnetAndUpdateAutoConnections(wiresManager,
+                                                                                                        tailCon,
                                                                                                         false,
                                                                                                         shape,
                                                                                                         cmagnet,
