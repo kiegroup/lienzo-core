@@ -85,7 +85,7 @@ public class WiresCompositeControlImpl
     private void setShapesToSkipFromIndex(final WiresShape shape) {
         final WiresParentPickerControl.Index index = shape.getControl().getParentPickerControl().getIndex();
         for (WiresShape candidate : selectedShapes) {
-            index.addShapeToSkip(candidate);
+            index.exclude(candidate);
         }
     }
 

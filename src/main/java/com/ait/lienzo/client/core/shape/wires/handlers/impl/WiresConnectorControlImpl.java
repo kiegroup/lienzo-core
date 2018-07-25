@@ -129,7 +129,8 @@ public class WiresConnectorControlImpl implements WiresConnectorControl {
     public void execute()
     {
         WiresConnector.updateHeadTailForRefreshedConnector(m_connector);
-        getControlPointsAcceptor().update(m_connector);
+        getControlPointsAcceptor().move(m_connector,
+                                        m_connector.getControlPoints().copy());
     }
 
     @Override
@@ -183,7 +184,7 @@ public class WiresConnectorControlImpl implements WiresConnectorControl {
 
         final int i = m_connector.addControlPoint(x, y);
         if (i > -1) {
-            getControlPointsAcceptor().add(m_connector, i, x, y);
+            getControlPointsAcceptor().add(m_connector, i, new Point2D(x, y));
         }
         refreshControlPoints();
         return i;
@@ -192,17 +193,15 @@ public class WiresConnectorControlImpl implements WiresConnectorControl {
     public void addControlPoint(final double x,
                                       final double y,
                                       final int index) {
-        if (getControlPointsAcceptor().add(m_connector, index, x, y)) {
+        if (getControlPointsAcceptor().add(m_connector, index, new Point2D(x, y))) {
             m_connector.addControlPoint(x, y, index);
         }
     }
 
     @Override
     public void destroyControlPoint(final int index) {
-        //  TODO: Potential bug here -> no callback for stunner in order to update the graph and remove the edge instance
         // Connection (line) need at least 2 points to be drawn
         if (m_connector.getPointHandles().size() <= 2) {
-            m_wiresManager.deregister(m_connector);
             return;
         }
         if (getControlPointsAcceptor().delete(m_connector,
@@ -229,19 +228,22 @@ public class WiresConnectorControlImpl implements WiresConnectorControl {
     }
 
     @Override
-    public void moveControlPoint(final int index,
+    public boolean moveControlPoint(final int index,
                                            final Point2D location)
     {
+        ;
         final double tx = location.getX();
         final double ty = location.getY();
         final boolean accept = getControlPointsAcceptor().move(m_connector,
-                                                       index,
-                                                       tx,
-                                                       ty);
+                                                               m_connector.getControlPoints()
+                                                                          .copy()
+                                                                          .set(index, location));
         // Check rollback
         if (accept) {
             m_connector.moveControlPoint(index, new Point2D(tx, ty));
+            return true;
         }
+        return false;
     }
 
     @Override

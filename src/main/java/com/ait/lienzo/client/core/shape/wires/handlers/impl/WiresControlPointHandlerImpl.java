@@ -62,9 +62,12 @@ public class WiresControlPointHandlerImpl implements WiresControlPointHandler {
     @Override
     public void onNodeDragEnd(NodeDragEndEvent event) {
         final IPrimitive<?> primitive = (IPrimitive<?>) event.getSource();
-        getControl().moveControlPoint(cpIndexInitial,
+        if (!getControl().moveControlPoint(cpIndexInitial,
                                       new Point2D(primitive.getX(),
-                                                  primitive.getY()));
+                                                  primitive.getY()))) {
+            event.getDragContext().reset();
+            getControl().reset();
+        }
     }
 
     private void batch() {

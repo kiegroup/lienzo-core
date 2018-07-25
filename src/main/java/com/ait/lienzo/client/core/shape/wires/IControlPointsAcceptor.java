@@ -1,5 +1,8 @@
 package com.ait.lienzo.client.core.shape.wires;
 
+import com.ait.lienzo.client.core.types.Point2D;
+import com.ait.lienzo.client.core.types.Point2DArray;
+
 public interface IControlPointsAcceptor
 {
     public static final IControlPointsAcceptor ALL  = new DefaultControlPointsAcceptor(true);
@@ -8,15 +11,10 @@ public interface IControlPointsAcceptor
 
     public boolean add(WiresConnector connector,
                        int index,
-                       double x,
-                       double y);
+                       Point2D location);
 
     public boolean move(WiresConnector connector,
-                       int index,
-                        double tx,
-                        double ty);
-
-    public void update(WiresConnector connector);
+                        Point2DArray pointsLocation);
 
     public boolean delete(WiresConnector connector,
                           int index);
@@ -32,24 +30,16 @@ public interface IControlPointsAcceptor
         @Override
         public boolean add(final WiresConnector connector,
                            final int index,
-                           final double x,
-                           final double y)
+                           final Point2D location)
         {
             return accept;
         }
 
         @Override
         public boolean move(final WiresConnector connector,
-                                      final int index,
-                                      final double tx,
-                                      final double ty)
+                            final Point2DArray pointsLocation)
         {
             return accept;
-        }
-
-        @Override
-        public void update(WiresConnector connector)
-        {
         }
 
         @Override

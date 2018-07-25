@@ -17,7 +17,7 @@ public class WiresHandlerFactoryImpl implements WiresHandlerFactory {
     @Override
     public WiresConnectorHandler newConnectorHandler(final WiresConnector connector,
                                                      final WiresManager wiresManager) {
-        return new WiresConnectorHandlerImpl(connector, wiresManager);
+        return WiresConnectorHandlerImpl.build(connector, wiresManager);
     }
 
     @Override

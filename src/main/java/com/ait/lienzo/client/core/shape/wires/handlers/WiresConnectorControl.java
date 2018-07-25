@@ -22,9 +22,9 @@ public interface WiresConnectorControl extends WiresMoveControl, WiresControl {
      */
     int addControlPoint(double x, double y);
 
-    void destroyControlPoint(int index);
+    boolean moveControlPoint(int index, Point2D location);
 
-    void moveControlPoint(int index, Point2D location);
+    void destroyControlPoint(int index);
 
     void showControlPoints();
 

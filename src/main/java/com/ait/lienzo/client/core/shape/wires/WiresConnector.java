@@ -867,9 +867,6 @@ public class WiresConnector
                     double x1 = points.get(2) + offsetX;
                     double y1 = points.get(3) + offsetY;
                     double r = points.get(4);
-                    Point2D p1 = new Point2D(x1,
-                                             y1);
-                    Point2D end = p1;
 
                     if (p0.equals(oldPoints.get(pointsIndex))) {
                         pointsIndex++;
@@ -888,7 +885,8 @@ public class WiresConnector
                               r);
                     ctx.stroke();
 
-                    segmentStart = end;
+                    segmentStart = new Point2D(x1,
+                                               y1);
                     break;
                 }
             }
@@ -910,13 +908,6 @@ public class WiresConnector
         return null != color ? colorMap.get(color) : -1;
     }
 
-
-
-
-
-
-
-
     @Override public boolean equals(Object o)
     {
         if (this == o)
@@ -930,7 +921,7 @@ public class WiresConnector
 
         WiresConnector that = (WiresConnector) o;
 
-        return getGroup().uuid() == that.getGroup().uuid();
+        return getGroup().uuid().equals(that.getGroup().uuid());
     }
 
     @Override public int hashCode()

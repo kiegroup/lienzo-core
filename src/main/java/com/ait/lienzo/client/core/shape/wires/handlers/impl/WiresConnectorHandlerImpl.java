@@ -5,7 +5,6 @@ import com.ait.lienzo.client.core.event.NodeDragMoveEvent;
 import com.ait.lienzo.client.core.event.NodeDragStartEvent;
 import com.ait.lienzo.client.core.event.NodeMouseClickEvent;
 import com.ait.lienzo.client.core.event.NodeMouseDoubleClickEvent;
-import com.ait.lienzo.client.core.shape.wires.SelectionManager;
 import com.ait.lienzo.client.core.shape.wires.WiresConnector;
 import com.ait.lienzo.client.core.shape.wires.WiresManager;
 import com.ait.lienzo.client.core.shape.wires.handlers.WiresConnectorControl;
@@ -17,45 +16,79 @@ public class WiresConnectorHandlerImpl implements WiresConnectorHandler {
 
     private final WiresConnector m_connector;
     private final WiresManager m_wiresManager;
-    private final Consumer<NodeMouseClickEvent> clickEventConsumer;
-    private final Consumer<NodeMouseDoubleClickEvent> doubleClickEventConsumer;
+    private final Consumer<Event> clickEventConsumer;
+    private final Consumer<Event> doubleClickEventConsumer;
+    private final Timer clickTimer;
+    private Event event;
 
-    public WiresConnectorHandlerImpl(final WiresConnector connector,
-                                     final WiresManager wiresManager) {
-        this(connector,
-             wiresManager,
-             new DefaultClickHandlers(wiresManager, connector));
+    public static class Event {
+        final double x;
+        final double y;
+        final boolean isShiftKeyDown;
+
+        public Event(final double x,
+                     final double y,
+                     final boolean isShiftKeyDown)
+        {
+            this.x = x;
+            this.y = y;
+            this.isShiftKeyDown = isShiftKeyDown;
+        }
+    }
+
+    public static WiresConnectorHandlerImpl build(final WiresConnector connector,
+                                                   final WiresManager wiresManager) {
+        final WiresConnectorEventConsumers consumers = new WiresConnectorEventConsumers(connector);
+        return new WiresConnectorHandlerImpl(connector,
+                                              wiresManager,
+                                              consumers.switchVisibility(),
+                                              consumers.addControlPoint());
     }
 
     public WiresConnectorHandlerImpl(final WiresConnector connector,
-                                     final WiresManager wiresManager,
-                                     final DefaultClickHandlers defaultClickHandlers) {
-        this(connector,
-             wiresManager,
-             defaultClickHandlers.onClick(),
-             defaultClickHandlers.onDoubleClick());
-    }
-
-    public WiresConnectorHandlerImpl(final WiresConnector connector,
-                                     final WiresManager wiresManager,
-                                     final Consumer<NodeMouseClickEvent> clickEventConsumer,
-                                     final Consumer<NodeMouseDoubleClickEvent> doubleClickEventConsumer) {
+                                      final WiresManager wiresManager,
+                                      final Consumer<Event> clickEventConsumer,
+                                      final Consumer<Event> doubleClickEventConsumer) {
         this.m_connector = connector;
         this.m_wiresManager = wiresManager;
         this.clickEventConsumer = clickEventConsumer;
         this.doubleClickEventConsumer = doubleClickEventConsumer;
+        this.clickTimer = new Timer() {
+            @Override
+            public void run()
+            {
+                if (getWiresManager().getSelectionManager() != null) {
+                    getWiresManager().getSelectionManager().selected(connector,
+                                                                     event.isShiftKeyDown);
+                }
+                clickEventConsumer.accept(event);
+                event = null;
+            }
+        };
+    }
+
+    WiresConnectorHandlerImpl(final WiresConnector connector,
+                              final WiresManager wiresManager,
+                              final Consumer<Event> clickEventConsumer,
+                              final Consumer<Event> doubleClickEventConsumer,
+                              final Timer clickTimer) {
+        this.m_connector = connector;
+        this.m_wiresManager = wiresManager;
+        this.clickEventConsumer = clickEventConsumer;
+        this.doubleClickEventConsumer = doubleClickEventConsumer;
+        this.clickTimer = clickTimer;
     }
 
     @Override
     public void onNodeDragStart(final NodeDragStartEvent event) {
         this.getControl().onMoveStart(event.getDragContext().getDragStartX(),
-                                   event.getDragContext().getDragStartY());
+                                      event.getDragContext().getDragStartY());
     }
 
     @Override
     public void onNodeDragMove(final NodeDragMoveEvent event) {
         this.getControl().onMove(event.getDragContext().getDragStartX(),
-                              event.getDragContext().getDragStartY());
+                                 event.getDragContext().getDragStartY());
     }
 
     @Override
@@ -69,12 +102,53 @@ public class WiresConnectorHandlerImpl implements WiresConnectorHandler {
 
     @Override
     public void onNodeMouseClick(final NodeMouseClickEvent event) {
-       clickEventConsumer.accept(event);
+        if (clickTimer.isRunning()) {
+            clickTimer.cancel();
+        }
+        this.event = new Event(event.getX(),
+                               event.getY(),
+                               event.isShiftKeyDown());
+        clickTimer.schedule(150);
     }
 
     @Override
     public void onNodeMouseDoubleClick(final NodeMouseDoubleClickEvent event) {
-        doubleClickEventConsumer.accept(event);
+        clickTimer.cancel();
+        doubleClickEventConsumer.accept(new Event(event.getX(),
+                                                  event.getY(),
+                                                  event.isShiftKeyDown()));
+    }
+
+    public static class WiresConnectorEventConsumers {
+        private final WiresConnector connector;
+
+        public WiresConnectorEventConsumers(final WiresConnector connector) {
+            this.connector = connector;
+        }
+
+        public Consumer<Event> switchVisibility() {
+            return new Consumer<Event>() {
+                @Override
+                public void accept(Event event) {
+                    final WiresConnectorControl control = connector.getControl();
+                    if (control.areControlPointsVisible()) {
+                        control.hideControlPoints();
+                    } else {
+                        control.showControlPoints();
+                    }
+                }
+            };
+        }
+
+        public Consumer<Event> addControlPoint() {
+            return new Consumer<Event>() {
+                @Override
+                public void accept(Event event) {
+                    connector.getControl().addControlPoint(event.x, event.y);
+                }
+            };
+        }
+
     }
 
     public WiresConnectorControl getControl() {
@@ -87,81 +161,6 @@ public class WiresConnectorHandlerImpl implements WiresConnectorHandler {
 
     WiresManager getWiresManager() {
         return m_wiresManager;
-    }
-
-    public static class DefaultClickHandlers {
-
-        private final Timer clickTimer;
-        private final WiresConnector connector;
-        private final boolean switchVisiblityOnClick;
-        private boolean isShiftKeyDown;
-
-        public DefaultClickHandlers(final WiresManager wiresManager,
-                                    final WiresConnector connector) {
-            this(connector,
-                 wiresManager.getSelectionManager(),
-                 true);
-        }
-
-        public DefaultClickHandlers(final WiresManager wiresManager,
-                                    final WiresConnector connector,
-                                    final boolean switchVisiblityOnClick) {
-            this(connector,
-                 wiresManager.getSelectionManager(),
-                 switchVisiblityOnClick);
-        }
-
-        private DefaultClickHandlers(final WiresConnector connector,
-                                    final SelectionManager selectionManager,
-                                     final boolean switchVisiblityOnClick) {
-            this.connector = connector;
-            this.switchVisiblityOnClick = switchVisiblityOnClick;
-            this.clickTimer = new Timer() {
-                @Override
-                public void run()
-                {
-                    if (selectionManager != null) {
-                        selectionManager.selected(connector, isShiftKeyDown);
-                    }
-                    if (switchVisiblityOnClick) {
-                        final WiresConnectorControl control = connector.getControl();
-                        if (control.areControlPointsVisible()) {
-                            control.hideControlPoints();
-                        } else {
-                            control.showControlPoints();
-                        }
-                    }
-                }
-            };
-        }
-
-        public Consumer<NodeMouseClickEvent> onClick() {
-            return new Consumer<NodeMouseClickEvent>() {
-                @Override
-                public void accept(NodeMouseClickEvent event) {
-                    cancelTimerIfRunning();
-                    isShiftKeyDown = event.isShiftKeyDown();
-                    clickTimer.schedule(150);
-                }
-            };
-        }
-
-        public Consumer<NodeMouseDoubleClickEvent> onDoubleClick() {
-            return new Consumer<NodeMouseDoubleClickEvent>() {
-                @Override
-                public void accept(NodeMouseDoubleClickEvent event) {
-                    clickTimer.cancel();
-                    connector.getControl().addControlPoint(event.getX(), event.getY());
-                }
-            };
-        }
-
-        private void cancelTimerIfRunning() {
-            if (clickTimer.isRunning()) {
-                clickTimer.cancel();
-            }
-        }
-
     }
 
 }

@@ -76,10 +76,10 @@ public class WiresShapeControlImpl
         // Otherwise children or the shape itself are being processed by the parent picker
         // and it ends up with wrong parent-child nested issues.
         final WiresParentPickerControl.Index index = parentPickerControl.getIndex();
-        index.addShapeToSkip(getShape());
+        index.exclude(getShape());
         final NFastArrayList<WiresShape> children = getShape().getChildShapes();
         for (int i = 0; i < children.size(); i++) {
-            index.addShapeToSkip(children.get(i));
+            index.exclude(children.get(i));
         }
 
         // Delegate mvoe start to the shape's docking control
@@ -187,8 +187,10 @@ public class WiresShapeControlImpl
                 && (dxy.getX() != dx || dxy.getY() != dy)) {
             BoundingBox box = getShape().getPath().getBoundingBox();
 
-            PickerPart part = getPicker().findShapeAt((int) (shapeBounds.getMinX() + dxy.getX() + (box.getWidth() / 2)),
-                                                      (int) (shapeBounds.getMinY() + dxy.getY() + (box.getHeight() / 2)));
+            PickerPart part = parentPickerControl
+                    .getIndex()
+                    .findShapeAt((int) (shapeBounds.getMinX() + dxy.getX() + (box.getWidth() / 2)),
+                                 (int) (shapeBounds.getMinY() + dxy.getY() + (box.getHeight() / 2)));
 
             if (part == null || part.getShapePart() != PickerPart.ShapePart.BORDER) {
                 dxy.setX(dx);
