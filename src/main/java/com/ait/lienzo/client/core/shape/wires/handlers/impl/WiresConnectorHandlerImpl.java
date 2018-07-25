@@ -60,7 +60,11 @@ public class WiresConnectorHandlerImpl implements WiresConnectorHandler {
 
     @Override
     public void onNodeDragEnd(final NodeDragEndEvent event) {
-        this.getControl().onMoveComplete();
+        if (getControl().onMoveComplete()) {
+            getControl().execute();
+        } else {
+            getControl().reset();
+        }
     }
 
     @Override

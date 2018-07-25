@@ -53,13 +53,12 @@ public class ShapeControlUtils {
     }
 
     /**
-     * Get all child {@link WiresConnector} from a given parent shape that are located inside the parent
-     * {@link BoundingBox}.
+     * Get all child {@link WiresConnector} inside a given parent shape.
      *
      * @param shape parent shape
      * @return Map of connectors by uuid
      */
-    public static Map<String, WiresConnector> getChildConnectorWithinShape(WiresShape shape) {
+    public static Map<String, WiresConnector> getChildConnectorsFromParent(WiresShape shape) {
         final Map<String, WiresConnector> connectors = new HashMap<>();
         if (shape.getMagnets() != null) {
             // start with 0, as we can have center connections too
@@ -69,18 +68,8 @@ public class ShapeControlUtils {
                     final WiresConnection connection = m.getConnections().get(j);
                     final WiresContainer parent = shape.getParent();
                     if (parent != null && parent.getGroup() != null) {
-                        final BoundingBox boundingBox = parent.getGroup().getBoundingBox();
                         final WiresConnector connector = connection.getConnector();
-                        final Point2D head = connector.getHead().getLocation();
-                        final Point2D tail = connector.getTail().getLocation();
-                        final Point2D parentX = new Point2D(boundingBox.getX() + parent.getX(), boundingBox.getY() + parent.getY());
-                        final Point2D parentY = new Point2D(boundingBox.getMaxX() + parent.getX(), boundingBox.getMaxY() + parent.getY());
-
-                        //check if the connector head and tail are inside the parent bounding box
-                        if (Geometry.intersectPointWithinBounding(head, parentX, parentY) &&
-                                Geometry.intersectPointWithinBounding(tail, parentX, parentY)) {
-                            connectors.put(connector.getGroup().uuid(), connector);
-                        }
+                        connectors.put(connector.uuid(), connector);
                     }
                 }
             }
@@ -92,7 +81,7 @@ public class ShapeControlUtils {
 
         for (WiresShape child : shape.getChildShapes()) {
             //recursive call to children
-            connectors.putAll(getChildConnectorWithinShape(child));
+            connectors.putAll(getChildConnectorsFromParent(child));
         }
         return connectors;
     }

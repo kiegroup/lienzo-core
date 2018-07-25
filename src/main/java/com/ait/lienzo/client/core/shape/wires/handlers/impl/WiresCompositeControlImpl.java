@@ -203,7 +203,6 @@ public class WiresCompositeControlImpl
         }
         final Collection<WiresConnector> connectors = selectedConnectors;
         if (!connectors.isEmpty()) {
-            // Update connectors and connections.
             for (WiresConnector connector : connectors) {
                 if (!connector.getControl().onMoveComplete()) {
                     completeResult = false;
