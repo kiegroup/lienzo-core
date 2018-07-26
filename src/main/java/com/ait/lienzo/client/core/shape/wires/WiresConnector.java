@@ -18,20 +18,9 @@
 package com.ait.lienzo.client.core.shape.wires;
 
 import com.ait.lienzo.client.core.Context2D;
-import com.ait.lienzo.client.core.shape.Group;
-import com.ait.lienzo.client.core.shape.IDirectionalMultiPointShape;
-import com.ait.lienzo.client.core.shape.IPrimitive;
-import com.ait.lienzo.client.core.shape.Layer;
-import com.ait.lienzo.client.core.shape.MultiPath;
-import com.ait.lienzo.client.core.shape.MultiPathDecorator;
-import com.ait.lienzo.client.core.shape.OrthogonalPolyLine;
+import com.ait.lienzo.client.core.shape.*;
 import com.ait.lienzo.client.core.shape.wires.handlers.WiresConnectorControl;
-import com.ait.lienzo.client.core.types.BoundingBox;
-import com.ait.lienzo.client.core.types.ImageData;
-import com.ait.lienzo.client.core.types.PathPartEntryJSO;
-import com.ait.lienzo.client.core.types.PathPartList;
-import com.ait.lienzo.client.core.types.Point2D;
-import com.ait.lienzo.client.core.types.Point2DArray;
+import com.ait.lienzo.client.core.types.*;
 import com.ait.lienzo.client.core.util.Geometry;
 import com.ait.lienzo.client.core.util.ScratchPad;
 import com.ait.lienzo.shared.core.types.ArrowEnd;
@@ -663,31 +652,13 @@ public class WiresConnector
         return m_line.getPoint2DArray();
     }
 
-    public int addControlPoint(final double x,
-                               final double y) {
-        final int index = getControlPointIndex(x, y);
-        if (index < 0) {
-            final int pointIndex = getIndexForSelectedSegment(this,
-                                                              (int) x,
-                                                              (int) y,
-                                                              getControlPoints());
-            addControlPoint(x, y, pointIndex);
-            return pointIndex;
-        }
-        return index;
-    }
-
     public void addControlPoint(final double x,
                                final double y,
                                final int index) {
         if (index > -1) {
-            final IPrimitive<?> current = getControlPoint(index);
-            if (null != current) {
-                final Point2D currentLocation = current.getLocation();
-                if (currentLocation.getX() == x &&
-                        currentLocation.getY() == y) {
-                    return;
-                }
+            final Point2D actual = getControlPoints().get(index);
+            if (actual.getX() == x && actual.getY() == y) {
+                return;
             }
             final Point2DArray oldPoints = getControlPoints();
             final Point2DArray newPoints = new Point2DArray();
@@ -748,6 +719,11 @@ public class WiresConnector
             i++;
         }
         return -1;
+    }
+
+    public int getIndexForSelectedSegment(final int x,
+                                          final int y) {
+        return getIndexForSelectedSegment(this, x, y, getControlPoints());
     }
 
     public static int getIndexForSelectedSegment(final WiresConnector connector,

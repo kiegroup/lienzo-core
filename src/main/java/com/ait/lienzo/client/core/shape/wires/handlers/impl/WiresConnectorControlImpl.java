@@ -4,12 +4,7 @@ import com.ait.lienzo.client.core.event.NodeDragEndEvent;
 import com.ait.lienzo.client.core.event.NodeDragEndHandler;
 import com.ait.lienzo.client.core.shape.IPrimitive;
 import com.ait.lienzo.client.core.shape.Shape;
-import com.ait.lienzo.client.core.shape.wires.IControlHandle;
-import com.ait.lienzo.client.core.shape.wires.IControlHandleList;
-import com.ait.lienzo.client.core.shape.wires.IControlPointsAcceptor;
-import com.ait.lienzo.client.core.shape.wires.WiresConnection;
-import com.ait.lienzo.client.core.shape.wires.WiresConnector;
-import com.ait.lienzo.client.core.shape.wires.WiresManager;
+import com.ait.lienzo.client.core.shape.wires.*;
 import com.ait.lienzo.client.core.shape.wires.handlers.WiresConnectionControl;
 import com.ait.lienzo.client.core.shape.wires.handlers.WiresConnectorControl;
 import com.ait.lienzo.client.core.shape.wires.handlers.WiresControlPointHandler;
@@ -182,20 +177,28 @@ public class WiresConnectorControlImpl implements WiresConnectorControl {
     public int addControlPoint(final double x,
                                 final double y) {
 
-        final int i = m_connector.addControlPoint(x, y);
-        if (i > -1) {
-            getControlPointsAcceptor().add(m_connector, i, new Point2D(x, y));
+        final int index = m_connector.getControlPointIndex(x, y);
+        if (index < 0)
+        {
+            final int pointIndex = m_connector.getIndexForSelectedSegment((int) x,
+                                                                          (int) y);
+            if (pointIndex > -1 && addControlPoint(x, y, pointIndex))
+            {
+                refreshControlPoints();
+            }
+            return pointIndex;
         }
-        refreshControlPoints();
-        return i;
+        return index;
     }
 
-    public void addControlPoint(final double x,
+    public boolean addControlPoint(final double x,
                                       final double y,
                                       final int index) {
         if (getControlPointsAcceptor().add(m_connector, index, new Point2D(x, y))) {
             m_connector.addControlPoint(x, y, index);
+            return true;
         }
+        return false;
     }
 
     @Override
@@ -231,19 +234,23 @@ public class WiresConnectorControlImpl implements WiresConnectorControl {
     public boolean moveControlPoint(final int index,
                                            final Point2D location)
     {
-        ;
-        final double tx = location.getX();
-        final double ty = location.getY();
-        final boolean accept = getControlPointsAcceptor().move(m_connector,
-                                                               m_connector.getControlPoints()
-                                                                          .copy()
-                                                                          .set(index, location));
-        // Check rollback
-        if (accept) {
-            m_connector.moveControlPoint(index, new Point2D(tx, ty));
-            return true;
+        final Point2DArray controlPoints = m_connector.getControlPoints();
+        // Notice that control points [0] and [controlPoints.size - 1] are being used for the connections as well,
+        // so they're being updated anyway on other event handlers - it must return "true" in that case.
+        if (index > 0 && index < (controlPoints.size() -1)) {
+            final double tx = location.getX();
+            final double ty = location.getY();
+            final boolean accept = getControlPointsAcceptor().move(m_connector,
+                                                                   controlPoints
+                                                                              .copy()
+                                                                              .set(index, location));
+            // Check rollback
+            if (accept) {
+                m_connector.moveControlPoint(index, new Point2D(tx, ty));
+            }
+            return accept;
         }
-        return false;
+        return true;
     }
 
     @Override
