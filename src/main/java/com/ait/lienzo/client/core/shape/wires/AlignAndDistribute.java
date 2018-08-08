@@ -209,10 +209,17 @@ public class AlignAndDistribute
             {
                 attrs = group.getBoundingBoxAttributes();
             }
-            handler = new AlignAndDistributeControlImpl((IPrimitive<?>) group, this, m_alignmentCallback, attrs);
+            handler = new AlignAndDistributeControlImpl((IPrimitive<?>) group, this, m_alignmentCallback);
             m_shapes.put(uuid, handler);
         }
         return handler;
+    }
+
+    public void refresh()
+    {
+        for(AlignAndDistributeControl handler : m_shapes.values()) {
+            handler.refresh();
+        }
     }
 
     public void removeShape(IDrawable<?> shape)
@@ -260,11 +267,12 @@ public class AlignAndDistribute
 
         LinkedList<AlignAndDistributeControl> bucket = index.get(rounded);
 
-        bucket.remove(handler);
+        if (bucket != null) {
+            bucket.remove(handler);
 
-        if (bucket.isEmpty())
-        {
-            index.remove(rounded);
+            if (bucket.isEmpty()) {
+                index.remove(rounded);
+            }
         }
     }
 
@@ -285,11 +293,12 @@ public class AlignAndDistribute
     {
         LinkedList<DistributionEntry> bucket = index.get(dist.getPoint());
 
-        bucket.remove(dist);
+        if (bucket != null) {
+            bucket.remove(dist);
 
-        if (bucket.isEmpty())
-        {
-            index.remove(dist.getPoint());
+            if (bucket.isEmpty()) {
+                index.remove(dist.getPoint());
+            }
         }
     }
 

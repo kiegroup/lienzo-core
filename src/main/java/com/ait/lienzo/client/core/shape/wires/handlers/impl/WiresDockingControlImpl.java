@@ -261,7 +261,6 @@ public class WiresDockingControlImpl extends AbstractWiresParentPickerControl
                 shape.setLocation(new Point2D(event.getX() + (event.getWidth() * xRatio) - (shapeBox.getWidth() / 2),
                                               event.getY() + (event.getHeight() * yRatio) - (shapeBox.getHeight() / 2)));
                 shape.shapeMoved();
-                shape.getControl().getAlignAndDistributeControl().updateIndex();
             }
         }));
     }
