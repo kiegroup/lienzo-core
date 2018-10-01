@@ -321,9 +321,6 @@ public class WiresShapeControlImpl
             getContainmentControl().reset();
         }
         parentPickerControl.reset();
-        if (null != m_alignAndDistributeControl) {
-            m_alignAndDistributeControl.updateIndex();
-        }
         getShape().shapeMoved();
         forEachConnectorControl(new Consumer<WiresConnectorControl>() {
             @Override

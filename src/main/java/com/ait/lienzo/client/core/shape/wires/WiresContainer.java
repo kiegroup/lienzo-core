@@ -194,10 +194,6 @@ public class WiresContainer
 
         shape.shapeMoved();
 
-        if (null != m_wiresManager && m_wiresManager.getAlignAndDistribute().isShapeIndexed(shape.uuid())) {
-            m_wiresManager.getAlignAndDistribute().getControlForShape(shape.uuid()).updateIndex();
-        }
-
         getLayoutHandler().requestLayout( this );
     }
 

@@ -1,27 +1,18 @@
 
 package com.ait.lienzo.client.core.shape.wires.handlers.impl;
 
-import static com.ait.lienzo.client.core.AttributeOp.any;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.ait.lienzo.client.core.Attribute;
-import com.ait.lienzo.client.core.event.AttributesChangedEvent;
-import com.ait.lienzo.client.core.event.AttributesChangedHandler;
 import com.ait.lienzo.client.core.shape.Attributes;
 import com.ait.lienzo.client.core.shape.Group;
-import com.ait.lienzo.client.core.shape.IDrawable;
 import com.ait.lienzo.client.core.shape.IPrimitive;
 import com.ait.lienzo.client.core.shape.wires.AlignAndDistribute;
 import com.ait.lienzo.client.core.shape.wires.handlers.AlignAndDistributeControl;
 import com.ait.lienzo.client.core.types.BoundingBox;
 import com.ait.lienzo.client.core.types.Point2D;
-import com.ait.tooling.common.api.flow.Flows;
-import com.ait.tooling.nativetools.client.collection.NFastStringSet;
-import com.ait.tooling.nativetools.client.event.HandlerRegistrationManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 
 public class AlignAndDistributeControlImpl implements AlignAndDistributeControl
@@ -31,10 +22,6 @@ public class AlignAndDistributeControlImpl implements AlignAndDistributeControl
     protected IPrimitive<?>                                        m_group;
 
     protected BoundingBox                                          m_box;
-
-    protected boolean                                              m_isDragging;
-
-    protected HandlerRegistrationManager                           m_attrHandlerRegs;
 
     protected HandlerRegistration                                  m_dragEndHandlerReg;
 
@@ -62,17 +49,7 @@ public class AlignAndDistributeControlImpl implements AlignAndDistributeControl
 
     private boolean                                                indexed;
 
-    private boolean                                                m_indexedButRemoved;
-
-    private Flows.BooleanOp                                        m_bboxOp;
-
-    private Flows.BooleanOp                                        m_tranOp;
-
-    private double                                                 m_leftOffset;
-
-    private double                                                 m_topOffset;
-
-    public AlignAndDistributeControlImpl(IPrimitive<?> group, AlignAndDistribute alignAndDistribute, AlignAndDistribute.AlignAndDistributeMatchesCallback alignAndDistributeMatchesCallback, List<Attribute> attributes)
+    public AlignAndDistributeControlImpl(IPrimitive<?> group, AlignAndDistribute alignAndDistribute, AlignAndDistribute.AlignAndDistributeMatchesCallback alignAndDistributeMatchesCallback)
     {
         m_group = group;
 
@@ -80,8 +57,6 @@ public class AlignAndDistributeControlImpl implements AlignAndDistributeControl
 
         m_alignAndDistributeMatchesCallback = alignAndDistributeMatchesCallback;
 
-        // circles xy are in centre, where as others are top left.
-        // For this reason we must use getBoundingBox, which uses BoundingPoints underneath, when ensures the shape x/y is now top left.
         m_box = AlignAndDistribute.getBoundingBox(group);
 
         double left = m_box.getMinX();
@@ -89,64 +64,10 @@ public class AlignAndDistributeControlImpl implements AlignAndDistributeControl
         double top = m_box.getMinY();
         double bottom = m_box.getMaxY();
 
-
         captureHorizontalPositions(left, right);
         captureVerticalPositions(top, bottom);
 
         m_alignAndDistribute.indexOn(this);
-
-        m_attrHandlerRegs = new HandlerRegistrationManager();
-
-        if (attributes != null)
-        {
-            final ArrayList<Attribute> temp = new ArrayList<Attribute>(attributes);
-
-            temp.add(Attribute.X);
-
-            temp.add(Attribute.Y);
-
-            final NFastStringSet seen = new NFastStringSet();
-
-            final ArrayList<Attribute> list = new ArrayList<Attribute>();
-
-            for (Attribute attribute : temp)
-            {
-                if (null != attribute)
-                {
-                    if (false == seen.contains(attribute.getProperty()))
-                    {
-                        list.add(attribute);
-
-                        seen.add(attribute.getProperty());
-                    }
-                }
-            }
-            m_bboxOp = any(list);
-
-            addHandlers(m_group, list);
-
-            m_tranOp = any(Attribute.ROTATION, Attribute.SCALE, Attribute.SHEAR);
-        }
-    }
-
-    private final AttributesChangedHandler ShapeAttributesChangedHandler = new AttributesChangedHandler()
-    {
-        @Override
-        public void onAttributesChanged(AttributesChangedEvent event)
-        {
-            refresh(event.evaluate(m_tranOp), event.evaluate(m_bboxOp));
-        }
-    };
-
-    public void addHandlers(IDrawable<?> drawable, ArrayList<Attribute> list)
-    {
-        for (Attribute attribute : list)
-        {
-            m_attrHandlerRegs.register(drawable.addAttributesChangedHandler(attribute, ShapeAttributesChangedHandler));
-        }
-        m_attrHandlerRegs.register(drawable.addAttributesChangedHandler(Attribute.ROTATION, ShapeAttributesChangedHandler));
-        m_attrHandlerRegs.register(drawable.addAttributesChangedHandler(Attribute.SCALE, ShapeAttributesChangedHandler));
-        m_attrHandlerRegs.register(drawable.addAttributesChangedHandler(Attribute.SHEAR, ShapeAttributesChangedHandler));
     }
 
     public boolean isIndexed()
@@ -252,7 +173,6 @@ public class AlignAndDistributeControlImpl implements AlignAndDistributeControl
 
     public void updateIndex()
     {
-
         // circles xy are in centre, where as others are top left.
         // For this reason we must use getBoundingBox, which uses BoundingPoints underneath, when ensures the shape x/y is now top left.
         m_box = AlignAndDistribute.getBoundingBox(m_group);
@@ -279,7 +199,7 @@ public class AlignAndDistributeControlImpl implements AlignAndDistributeControl
         updateIndex(leftChanged, rightChanged, topChanged, bottomChanged, left, right, top, bottom);
     }
 
-    public void updateIndex(boolean leftChanged, boolean rightChanged, boolean topChanged, boolean bottomChanged, double left, double right, double top, double bottom)
+    private void updateIndex(boolean leftChanged, boolean rightChanged, boolean topChanged, boolean bottomChanged, double left, double right, double top, double bottom)
     {
         if (leftChanged || rightChanged)
         {
@@ -399,36 +319,21 @@ public class AlignAndDistributeControlImpl implements AlignAndDistributeControl
     @Override
     public void refresh()
     {
-        refresh(true, true);
-    }
+        boolean hasTransformations = hasComplexTransformAttributes();
 
-    @Override
-    public void refresh(boolean transforms, boolean attributes)
-    {
-
-        if (m_isDragging || m_indexedButRemoved)
+        if (indexed && hasTransformations)
         {
-            // ignore attribute changes while dragging
-            return;
-        }
-        if (transforms)
-        {
-            boolean hasTransformations = hasComplexTransformAttributes();
-
-            if (indexed && hasTransformations)
-            {
-                // Indexing cannot be done on transformed shapes
+            // Indexing cannot be done on transformed shapes
                 // it's cheaper to just check if the attributes exist on the shape, than it is to test for attributes on the event
-                m_alignAndDistribute.indexOff(this);
-            }
-            else if (!indexed && !hasTransformations)
-            {
-                // Indexing was turned off, but there are no more transformations, so turn it back on again
-                m_alignAndDistribute.indexOn(this);
-            }
+            m_alignAndDistribute.indexOff(this);
+        }
+        else if (!indexed && !hasTransformations)
+        {
+            // Indexing was turned off, but there are no more transformations, so turn it back on again
+            m_alignAndDistribute.indexOn(this);
         }
 
-        if (indexed && attributes)
+        if (indexed)
         {
             updateIndex();
         }
@@ -437,19 +342,20 @@ public class AlignAndDistributeControlImpl implements AlignAndDistributeControl
     @Override
     public void dragStart()
     {
+        m_alignAndDistribute.refresh();
+
         // shapes being dragged must be removed from the index, so that they don't snap to themselves
         // Also removes all nested shapes.
         m_startLeft = m_left;
         m_startTop = m_top;
 
-        m_isDragging = true;
         iterateAndRemoveIndex(m_group);
     }
 
     @Override
     public void remove()
     {
-        this.removeHandlerRegistrations();
+        this.removeDragHandlerRegistrations();
     }
 
     public void iterateAndRemoveIndex(IPrimitive<?> prim)
@@ -477,7 +383,6 @@ public class AlignAndDistributeControlImpl implements AlignAndDistributeControl
         if (handler != null && handler.isIndexed())
         {
             m_alignAndDistribute.indexOffWithoutChangingStatus(handler);
-            handler.m_indexedButRemoved = true;
         }
     }
 
@@ -526,8 +431,6 @@ public class AlignAndDistributeControlImpl implements AlignAndDistributeControl
         if (handler != null && handler.isIndexed())
         {
             m_alignAndDistribute.indexOnWithoutChangingStatus(handler);
-            ((AlignAndDistributeControlImpl)handler).m_indexedButRemoved = true;
-            handler.updateIndex();
         }
     }
 
@@ -645,27 +548,20 @@ public class AlignAndDistributeControlImpl implements AlignAndDistributeControl
     }
 
     @Override
-    public void dragEnd()
-    {
-        if (m_isDragging)
-        {
-            m_isDragging = false;
+    public void dragEnd() {
+        m_alignAndDistributeMatchesCallback.dragEnd();
 
-            m_alignAndDistributeMatchesCallback.dragEnd();
+        // We do not want the nested indexed shapes to impact the bounding box
+        // so remove them, they will be added once the index has been made.
+        List<ShapePair> pairs = new ArrayList<ShapePair>();
+        removeChildrenIfIndexed(m_group, pairs);
 
-            // We do not want the nested indexed shapes to impact the bounding box
-            // so remove them, they will be added once the index has been made.
-            List<ShapePair> pairs = new ArrayList<ShapePair>();
-            removeChildrenIfIndexed(m_group, pairs);
+        indexOn(m_group);
 
-            indexOn(m_group);
-
-            // re-add the children, index before it adds the next nested child
-            for (ShapePair pair : pairs)
-            {
-                pair.parent.add(pair.child);
-                indexOn(pair.handler);
-            }
+        // re-add the children, index before it adds the next nested child
+        for (ShapePair pair : pairs) {
+            pair.parent.add(pair.child);
+            indexOn(pair.handler);
         }
     }
 
@@ -677,16 +573,5 @@ public class AlignAndDistributeControlImpl implements AlignAndDistributeControl
 
             m_dragEndHandlerReg = null;
         }
-    }
-
-    public void removeHandlerRegistrations()
-    {
-        if (null != m_attrHandlerRegs)
-        {
-            m_attrHandlerRegs.destroy();
-
-            m_attrHandlerRegs = null;
-        }
-        removeDragHandlerRegistrations();
     }
 }
