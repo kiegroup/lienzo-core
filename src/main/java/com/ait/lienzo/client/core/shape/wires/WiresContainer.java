@@ -126,6 +126,7 @@ public class WiresContainer
     {
         getGroup().setLocation(p);
         shapeMoved();
+
         return this;
     }
 
