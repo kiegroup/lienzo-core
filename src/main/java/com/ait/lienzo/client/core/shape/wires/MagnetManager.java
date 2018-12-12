@@ -33,7 +33,7 @@ import com.ait.lienzo.client.core.shape.IPrimitive;
 import com.ait.lienzo.client.core.shape.Shape;
 import com.ait.lienzo.client.core.shape.wires.decorator.IShapeDecorator;
 import com.ait.lienzo.client.core.shape.wires.decorator.MagnetDecorator;
-import com.ait.lienzo.client.core.shape.wires.handlers.WiresMagnetsControl;
+import com.ait.lienzo.client.core.shape.wires.handlers.WiresShapeControl;
 import com.ait.lienzo.client.core.types.BoundingBox;
 import com.ait.lienzo.client.core.types.ColorKeyRotor;
 import com.ait.lienzo.client.core.types.ImageData;
@@ -306,7 +306,7 @@ public class MagnetManager
         {
             if (!m_isDragging && event.any(Attribute.X, Attribute.Y))
             {
-                getControl().shapeMoved();
+                notifyShapeMoved();
             }
         }
 
@@ -320,13 +320,13 @@ public class MagnetManager
         public void onNodeDragEnd(NodeDragEndEvent event)
         {
             m_isDragging = false;
-            getControl().shapeMoved();
+            notifyShapeMoved();
         }
 
         @Override
         public void onNodeDragMove(NodeDragMoveEvent event)
         {
-            getControl().shapeMoved();
+            notifyShapeMoved();
         }
 
         public void show()
@@ -381,8 +381,12 @@ public class MagnetManager
             return (WiresMagnet) m_list.getHandle(index);
         }
 
-        private WiresMagnetsControl getControl() {
-            return getWiresShape().getControl().getMagnetsControl();
+        private void notifyShapeMoved(){
+            WiresShapeControl control = getWiresShape().getControl();
+            if (control != null)
+            {
+                control.getMagnetsControl().shapeMoved();
+            }
         }
 
         private void batch()
