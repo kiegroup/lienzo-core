@@ -45,7 +45,7 @@ import com.ait.tooling.nativetools.client.collection.NFastArrayList;
 import com.ait.tooling.nativetools.client.collection.NFastStringMap;
 import com.ait.tooling.nativetools.client.event.HandlerRegistrationManager;
 
-public final class WiresManager
+public class WiresManager
 {
 
     private static final NFastStringMap<WiresManager>        MANAGER_MAP           = new NFastStringMap<WiresManager>();
