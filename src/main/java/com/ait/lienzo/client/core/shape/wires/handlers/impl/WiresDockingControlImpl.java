@@ -1,3 +1,19 @@
+/*
+ * Copyright 2018 Red Hat, Inc. and/or its affiliates.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.ait.lienzo.client.core.shape.wires.handlers.impl;
 
 import com.ait.lienzo.client.core.shape.wires.IDockingAcceptor;
@@ -85,10 +101,13 @@ public class WiresDockingControlImpl extends AbstractWiresParentPickerControl
                                               getShape(),
                                               (WiresShape) getParent());
         }
-        return null != m_intersection;
+        return isIntersecting();
     }
 
     private Point2D findIntersection(double dx, double dy, final Point2D initialPathLocation, final WiresShape shape,  final WiresShape parent) {
+        if (null == parent) {
+            return null;
+        }
         final Point2D parentLocation = parent.getComputedLocation();
         final BoundingBox box = shape.getPath().getBoundingBox();
         final double shapeX = initialPathLocation.getX() + dx + (box.getWidth() / 2) - parentLocation.getX();
@@ -105,8 +124,8 @@ public class WiresDockingControlImpl extends AbstractWiresParentPickerControl
 
     @Override
     public Point2D getAdjust() {
-        if (isEnabled() && m_intersection != null) {
-            Point2D candidateLocation = getCandidateLocation();
+        if (isEnabled() && isIntersecting()) {
+            final Point2D candidateLocation = getCandidateLocation();
             final Point2D absLoc = getParent().getComputedLocation();
             m_absDockPosition = new Point2D(absLoc.getX() + candidateLocation.getX(),
                                             absLoc.getY() + candidateLocation.getY());
@@ -142,7 +161,7 @@ public class WiresDockingControlImpl extends AbstractWiresParentPickerControl
     @Override
     public Point2D getCandidateLocation() {
         final WiresShape shape = getShape();
-        if (m_absInitialPathLocation == null || m_intersection == null) {
+        if (m_absInitialPathLocation == null || !isIntersecting()) {
             return computeCandidateLocation(shape);
         }
         return getCandidateLocation(shape);
@@ -157,6 +176,9 @@ public class WiresDockingControlImpl extends AbstractWiresParentPickerControl
     }
 
     private Point2D getCandidateLocation(WiresShape shape) {
+        if (!isIntersecting()) {
+            return null;
+        }
         BoundingBox box = shape.getPath().getBoundingBox();
         double x = m_intersection.getX() - (box.getWidth() / 2);
         double y = m_intersection.getY() -  (box.getHeight() / 2);
@@ -275,6 +297,10 @@ public class WiresDockingControlImpl extends AbstractWiresParentPickerControl
             shape.setDockedTo(null);
         }
         removeHandlers();
+    }
+
+    private boolean isIntersecting() {
+        return null != m_intersection;
     }
 
     private void registerHandler(HandlerRegistration handler) {
