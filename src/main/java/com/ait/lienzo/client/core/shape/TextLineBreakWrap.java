@@ -77,21 +77,23 @@ public class TextLineBreakWrap extends TextNoWrap {
         final String[] lines = text.split("\\r?\\n");
         final BoundingBox bb = getBoundingBox();
 
+        final double x = attr.getX();
+        final double y = attr.getY();
         double xOffset = 0;
 
         switch (textAlignSupplier.get()) {
             case START:
             case LEFT:
-                xOffset = 0;
+                xOffset = x;
                 break;
 
             case CENTER:
-                xOffset = bb.getWidth() / 2;
+                xOffset = x + bb.getWidth() / 2;
                 break;
 
             case END:
             case RIGHT:
-                xOffset = bb.getWidth();
+                xOffset = x + bb.getWidth();
                 break;
         }
 
@@ -100,6 +102,7 @@ public class TextLineBreakWrap extends TextNoWrap {
             drawCommand.draw(context,
                              line,
                              xOffset,
+                             y,
                              i + 0.8);
         }
     }

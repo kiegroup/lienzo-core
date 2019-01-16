@@ -132,21 +132,23 @@ public class TextBoundsWrap extends TextNoWrap {
         }
         lines.add(nextLine.toString());
 
+        final double x = attr.getX();
+        final double y = attr.getY();
         double xOffset = 0;
 
         switch (textAlignSupplier.get()) {
             case START:
             case LEFT:
-                xOffset = 0;
+                xOffset = x;
                 break;
 
             case CENTER:
-                xOffset = wrapBoundaries.getWidth() / 2;
+                xOffset = x + wrapBoundaries.getWidth() / 2;
                 break;
 
             case END:
             case RIGHT:
-                xOffset = wrapBoundaries.getWidth();
+                xOffset = x + wrapBoundaries.getWidth();
                 break;
         }
         double yOffset = 0.8;
@@ -161,6 +163,7 @@ public class TextBoundsWrap extends TextNoWrap {
             drawCommand.draw(context,
                              line,
                              xOffset,
+                             y,
                              i + yOffset);
         }
     }

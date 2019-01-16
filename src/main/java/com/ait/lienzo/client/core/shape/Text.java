@@ -44,11 +44,14 @@ public class Text extends Shape<Text>
 
     private final IDrawString STROKE = new IDrawString() {
         @Override
-        public void draw(Context2D context, String s,
-                         double xOffset, double lineNum) {
+        public void draw(Context2D context,
+                         String s,
+                         double xOffset,
+                         double yOffset,
+                         double lineNum) {
             context.beginPath();
 
-            context.strokeText(s, xOffset, getLineHeight(context) * lineNum);
+            context.strokeText(s, xOffset, yOffset + getLineHeight(context) * lineNum);
 
             context.closePath();
 
@@ -59,8 +62,10 @@ public class Text extends Shape<Text>
         @Override
         public void draw(Context2D context,
                          String s,
-                         double xOffset, double lineNum) {
-            context.fillText(s, xOffset, getLineHeight(context) * lineNum);
+                         double xOffset,
+                         double yOffset,
+                         double lineNum) {
+            context.fillText(s, xOffset, yOffset + getLineHeight(context) * lineNum);
         }
     };
 
@@ -262,8 +267,10 @@ public class Text extends Shape<Text>
                                        @Override
                                        public void draw(Context2D context,
                                                         String s,
-                                                        double xOffset, double lineNum) {
-                                           context.fillTextWithGradient(s, xOffset, getLineHeight(context) * lineNum, 0, 0, wide + (wide / 6), high + (high / 6), color);
+                                                        double xOffset,
+                                                        double yOffset,
+                                                        double lineNum) {
+                                           context.fillTextWithGradient(s, xOffset, yOffset + getLineHeight(context) * lineNum, 0, 0, wide + (wide / 6), high + (high / 6), color);
                                        }
                                    });
 
@@ -278,8 +285,10 @@ public class Text extends Shape<Text>
                                        @Override
                                        public void draw(Context2D context,
                                                         String s,
-                                                        double xOffset, double lineNum) {
-                                           context.fillTextWithGradient(s, xOffset, getLineHeight(context) * lineNum, 0,0, layer.getWidth(), layer.getHeight(), color);
+                                                        double xOffset,
+                                                        double yOffset,
+                                                        double lineNum) {
+                                           context.fillTextWithGradient(s, xOffset, yOffset + getLineHeight(context) * lineNum, 0,0, layer.getWidth(), layer.getHeight(), color);
                                        }
                                    });
                     }

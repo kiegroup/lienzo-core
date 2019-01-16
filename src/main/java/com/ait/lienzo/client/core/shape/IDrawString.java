@@ -23,5 +23,5 @@ import com.ait.lienzo.client.core.Context2D;
  */
 public interface IDrawString {
 
-    void draw(Context2D c, String s, double xOffset, double lineNum);
+    void draw(Context2D c, String s, double xOffset, double yOffset, double lineNum);
 }
