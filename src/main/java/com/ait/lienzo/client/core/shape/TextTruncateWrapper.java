@@ -27,14 +27,21 @@ import com.ait.lienzo.client.core.types.BoundingBox;
 @SuppressWarnings("Duplicates")
 public class TextTruncateWrapper extends TextNoWrap {
 
-    private BoundingBox      m_wrapBoundaries;
-    private final double     Y_OFFSET = 0.8;
+    private static final double     Y_OFFSET           = 0.8;
+
+    private BoundingBox             m_wrapBoundaries;
+
+    private final double            m_margin;
+
+    private final double            m_lineHeight;
 
     public TextTruncateWrapper(final Text text,
                                final BoundingBox wrapBoundaries)
     {
         super(text);
         setWrapBoundaries(wrapBoundaries);
+        m_margin = 4 * getBoundingBoxForString(" ").getWidth();
+        m_lineHeight = text.getLineHeight(null);
     }
 
     public BoundingBox getWrapBoundaries()
@@ -58,8 +65,7 @@ public class TextTruncateWrapper extends TextNoWrap {
 
     private double getWrapBoundariesWidth()
     {
-        final double margin = 4 * getBoundingBoxForString(" ").getWidth();
-        return this.m_wrapBoundaries.getWidth() - margin;
+        return m_wrapBoundaries.getWidth() - m_margin;
     }
 
     private double[] calculateWrapBoundaries()
@@ -124,7 +130,6 @@ public class TextTruncateWrapper extends TextNoWrap {
             return;
         }
 
-        final double lineHeight = getBoundingBoxForString(" ").getHeight();
         final ArrayList<String> lines = new ArrayList<String>();
         final double boundariesWidth = getWrapBoundariesWidth();
         StringBuilder currentLine = new StringBuilder();
@@ -158,7 +163,7 @@ public class TextTruncateWrapper extends TextNoWrap {
                 }
 
                 if (i != words.length - 1
-                        && !hasVerticalSpace(lines.size() + 2, lineHeight, this.m_wrapBoundaries.getHeight() - (Y_OFFSET * lines.size() + 2)))
+                        && !hasVerticalSpace(lines.size() + 2, m_lineHeight, m_wrapBoundaries.getHeight() - (Y_OFFSET * lines.size() + 2)))
                 {
                     if (currentLine.length() > 3)
                     {
@@ -190,7 +195,7 @@ public class TextTruncateWrapper extends TextNoWrap {
 
                 currentLine.append(newWord);
 
-                if (!hasVerticalSpace(lines.size() + 2, lineHeight, this.m_wrapBoundaries.getHeight() - (Y_OFFSET * lines.size() + 2)))
+                if (!hasVerticalSpace(lines.size() + 2, m_lineHeight, m_wrapBoundaries.getHeight() - (Y_OFFSET * lines.size() + 2)))
                 {
                     if (currentLine.length() > 3) {
                         currentLine = new StringBuilder(currentLine.substring(0, currentLine.length() - 3) + "...");
