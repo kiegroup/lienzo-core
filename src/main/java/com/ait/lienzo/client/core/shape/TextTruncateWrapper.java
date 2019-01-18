@@ -31,17 +31,13 @@ public class TextTruncateWrapper extends TextNoWrap {
 
     private BoundingBox             m_wrapBoundaries;
 
-    private final double            m_margin;
-
-    private final double            m_lineHeight;
+    private static final double     m_margin           = 20;
 
     public TextTruncateWrapper(final Text text,
                                final BoundingBox wrapBoundaries)
     {
         super(text);
         setWrapBoundaries(wrapBoundaries);
-        m_margin = 4 * getBoundingBoxForString(" ").getWidth();
-        m_lineHeight = text.getLineHeight(null);
     }
 
     public BoundingBox getWrapBoundaries()
@@ -134,7 +130,7 @@ public class TextTruncateWrapper extends TextNoWrap {
         final double boundariesWidth = getWrapBoundariesWidth();
         StringBuilder currentLine = new StringBuilder();
         String currentWord;
-
+        final double lineHeight = getBoundingBoxForString("Mg").getHeight();
         for (int i = 0; i < words.length; i++)
         {
             currentWord = words[i];
@@ -163,7 +159,7 @@ public class TextTruncateWrapper extends TextNoWrap {
                 }
 
                 if (i != words.length - 1
-                        && !hasVerticalSpace(lines.size() + 2, m_lineHeight, m_wrapBoundaries.getHeight() - (Y_OFFSET * lines.size() + 2)))
+                        && !hasVerticalSpace(lines.size() + 2, lineHeight, m_wrapBoundaries.getHeight() - (Y_OFFSET * lines.size() + 2)))
                 {
                     if (currentLine.length() > 3)
                     {
@@ -195,7 +191,7 @@ public class TextTruncateWrapper extends TextNoWrap {
 
                 currentLine.append(newWord);
 
-                if (!hasVerticalSpace(lines.size() + 2, m_lineHeight, m_wrapBoundaries.getHeight() - (Y_OFFSET * lines.size() + 2)))
+                if (!hasVerticalSpace(lines.size() + 2, lineHeight, m_wrapBoundaries.getHeight() - (Y_OFFSET * lines.size() + 2)))
                 {
                     if (currentLine.length() > 3) {
                         currentLine = new StringBuilder(currentLine.substring(0, currentLine.length() - 3) + "...");
