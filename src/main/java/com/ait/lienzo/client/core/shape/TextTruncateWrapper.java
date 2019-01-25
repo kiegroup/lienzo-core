@@ -94,7 +94,7 @@ public class TextTruncateWrapper extends TextNoWrap {
             }
         }
 
-        final double lineHeight = (getBoundingBoxForString(" ").getHeight());
+        final double lineHeight = getLineHeight();
 
         while (!hasVerticalSpace(numOfLines, lineHeight, m_wrapBoundaries.getHeight() - (Y_OFFSET * numOfLines))
                 && numOfLines >= 0)
@@ -114,6 +114,11 @@ public class TextTruncateWrapper extends TextNoWrap {
         return lineHeight * (lineIndex + Y_OFFSET) <= availableHeight;
     }
 
+    private double getLineHeight()
+    {
+        return getBoundingBoxForString("Mg").getHeight();
+    }
+
     @Override
     public void drawString(final Context2D context,
                            final Attributes attr,
@@ -130,7 +135,7 @@ public class TextTruncateWrapper extends TextNoWrap {
         final double boundariesWidth = getWrapBoundariesWidth();
         StringBuilder currentLine = new StringBuilder();
         String currentWord;
-        final double lineHeight = getBoundingBoxForString("Mg").getHeight();
+        final double lineHeight = getLineHeight();
         for (int i = 0; i < words.length; i++)
         {
             currentWord = words[i];
