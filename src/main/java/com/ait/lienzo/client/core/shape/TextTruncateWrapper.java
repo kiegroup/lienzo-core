@@ -45,6 +45,7 @@ public class TextTruncateWrapper extends TextNoWrap implements ITextWrapperWithB
         return m_wrapBoundaries;
     }
 
+    @Override
     public void setWrapBoundaries(final BoundingBox boundaries)
     {
         m_wrapBoundaries = boundaries;

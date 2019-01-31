@@ -64,6 +64,7 @@ public class TextBoundsWrap extends TextNoWrap implements ITextWrapperWithBounda
         return wrapBoundaries;
     }
 
+    @Override
     public void setWrapBoundaries(final BoundingBox boundaries) {
         wrapBoundaries = boundaries;
     }
