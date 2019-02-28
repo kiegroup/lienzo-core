@@ -810,7 +810,7 @@ public class SelectionManager implements NodeMouseDoubleClickHandler, NodeMouseC
             return m_shapes.remove(shape);
         }
 
-        /** if a shape is removed, any connectors need to be checked in case they are not externally connected
+        /** If a shape is removed, any connectors need to be checked in case they are not externally connected
          *  this must be done for the current shape and all children shapes, as the child could have a connector in the selection
          * @param shape
          */
