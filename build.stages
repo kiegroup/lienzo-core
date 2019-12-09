@@ -1,10 +1,9 @@
-stage('Initialize') {
-    script {
-        githubscm.checkoutIfExists('lienzo-core', "$CHANGE_AUTHOR", "$CHANGE_BRANCH", 'kiegroup', "$CHANGE_TARGET")
-    }
-}
 stage('Build lienzo-core') {
     script {
-        maven.runMavenWithSubmarineSettings('clean install', true)
+        if(!env.kiegroup_lienzo_core) {
+            githubscm.checkoutIfExists('lienzo-core', "$CHANGE_AUTHOR", "$CHANGE_BRANCH", 'kiegroup', "$CHANGE_TARGET")
+            maven.runMavenWithSubmarineSettings('clean install', true)
+            env.kiegroup_lienzo_core = true;
+        }
     }
 }
