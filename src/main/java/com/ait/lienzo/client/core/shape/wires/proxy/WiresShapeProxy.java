@@ -55,12 +55,22 @@ public class WiresShapeProxy
     public void start(final double x,
                       final double y) {
         final Point2D location = new Point2D(x, y);
-        enable();
+        shape = shapeBuilder.get();
         startLocation = location.copy();
         if (null != shape.getParent()) {
             final Point2D parentLocation = shape.getParent().getComputedLocation();
-            startLocation.minus(parentLocation);
+            startLocation.add(parentLocation);
+            shape.removeFromParent();
+            getWiresLayer().add(shape);
         }
+        hideAllConnectorControlPoints(shape);
+        control = WiresShapeHighlightControl.create(getWiresManager(),
+                                                    new Supplier<WiresShapeControl>() {
+                                                        @Override
+                                                        public WiresShapeControl get() {
+                                                            return shape.getControl();
+                                                        }
+                                                    });
         shape.setLocation(startLocation);
         refreshAlignAndDistro();
         control.onMoveStart(startLocation.getX(), startLocation.getY());
@@ -106,18 +116,6 @@ public class WiresShapeProxy
         shape = null;
         control = null;
         startLocation = null;
-    }
-
-    private void enable() {
-        shape = shapeBuilder.get();
-        hideAllConnectorControlPoints(shape);
-        control = WiresShapeHighlightControl.create(getWiresManager(),
-                                                    new Supplier<WiresShapeControl>() {
-                                                        @Override
-                                                        public WiresShapeControl get() {
-                                                            return shape.getControl();
-                                                        }
-                                                    });
     }
 
     private void refreshAlignAndDistro() {
