@@ -1722,10 +1722,6 @@ public final class Geometry
 
     public static Point2D getProjection(Point2D center, Point2D intersection, double length)
     {
-        if (intersection.equals(center)) {
-            return new Point2D(0, 0);
-        }
-
         Point2D unit = intersection.sub(center).unit();
 
         return center.add(unit.mul(length));

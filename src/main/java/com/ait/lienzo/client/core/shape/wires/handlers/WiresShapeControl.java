@@ -27,9 +27,9 @@ public interface WiresShapeControl extends WiresMoveControl,
                                            WiresControl,
                                            WiresBoundsConstraintControl {
 
-    WiresShapeControl useIndex(Supplier<WiresLayerIndex> index);
+    void useIndex(Supplier<WiresLayerIndex> index);
 
-    WiresShapeControl setAlignAndDistributeControl(AlignAndDistributeControl control);
+    void setAlignAndDistributeControl(AlignAndDistributeControl control);
 
     WiresMagnetsControl getMagnetsControl();
 
@@ -42,7 +42,5 @@ public interface WiresShapeControl extends WiresMoveControl,
     WiresParentPickerControl getParentPickerControl();
 
     boolean accept();
-
-    boolean isAccepted();
 
 }

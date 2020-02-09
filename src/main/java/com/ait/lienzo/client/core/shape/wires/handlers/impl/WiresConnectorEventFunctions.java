@@ -57,9 +57,8 @@ public class WiresConnectorEventFunctions
             @Override
             public void accept(WiresConnectorHandlerImpl.Event event)
             {
-                if (null != wiresManager.getSelectionManager()) {
-                    wiresManager.getSelectionManager().selected(connector, false);
-                }
+                final SelectionManager selectionManager = wiresManager.getSelectionManager();
+                selectionManager.selected(connector, false);
                 connector.getControl().showControlPoints();
             }
         };
