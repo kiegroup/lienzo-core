@@ -19,14 +19,19 @@ pipeline {
         }
         stage('Build projects') {
             steps {
-                dir("droolsjbpm-build-bootstrap") {
+                dir("source-clear") {
                     script {
-//                        githubscm.checkoutIfExists('droolsjbpm-build-bootstrap', "$CHANGE_AUTHOR", "$CHANGE_BRANCH", 'kiegroup', "$CHANGE_TARGET")
-//                        def file =  'sourceclear.stages'
-//                        println "Loading ${file} file..."
-//                        load("${file}")
-                          sh "echo Check url param"
-                          sh "echo ${env.GIT_URL}"
+                      build(
+                        job: "${env.SRCCLR_SCAN_JOB_PATH}",
+                          parameters: [
+                            [$class: 'StringParameterValue', name: 'SCAN_TYPE', value: 'scm'],
+                            [$class: 'StringParameterValue', name: 'URL', value: "${env.GIT_URL}"],
+                            [$class: 'StringParameterValue', name: 'VERSION', value: "${env.GIT_BRANCH}"],
+                            [$class: 'StringParameterValue', name: 'NAME', value: 'KIELienzoCore'],
+                            [$class: 'StringParameterValue', name: 'PROCESSOR_TYPE', value: 'cve'],
+                            [$class: 'StringParameterValue', name: 'THRESHOLD', value: '1']
+                          ]
+                      )
                     }
                 }
             }
@@ -44,7 +49,6 @@ pipeline {
             }
         }
         always {
-            //junit '**/target/surefire-reports/**/*.xml'
             cleanWs()
         }
     }
