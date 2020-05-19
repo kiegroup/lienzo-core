@@ -33,6 +33,9 @@ public class ScrollablePanelHandler
 
     static final int DEFAULT_INTERNAL_SCROLL_WIDTH  = 1;
 
+    int currentPanelWidth;
+    int currentPanelHeight;
+
     public ScrollablePanelHandler(final ScrollablePanel panel)
     {
         this.panel = panel;
@@ -51,6 +54,8 @@ public class ScrollablePanelHandler
         setupLienzoScrollStyle();
         setupScrollBarSynchronization();
         setupContextSwitcher();
+        currentPanelWidth = calculateInternalScrollPanelWidth();;
+        currentPanelHeight = calculateInternalScrollPanelHeight();;
     }
 
     void setupContextSwitcher()
@@ -130,8 +135,15 @@ public class ScrollablePanelHandler
 
     public void refresh()
     {
-        synchronizeScrollSize();
-        refreshScrollPosition();
+        final int width  = calculateInternalScrollPanelWidth();
+        final int height = calculateInternalScrollPanelHeight();
+        if (currentPanelWidth != width || currentPanelHeight != height)
+        {
+            currentPanelWidth = width;
+            currentPanelHeight = height;
+            synchronizeScrollSize(currentPanelWidth, currentPanelHeight);
+            refreshScrollPosition();
+        }
     }
 
     void refreshScrollPosition()
@@ -151,8 +163,12 @@ public class ScrollablePanelHandler
 
     void synchronizeScrollSize()
     {
-        final int width  = calculateInternalScrollPanelWidth();
-        final int height = calculateInternalScrollPanelHeight();
+        synchronizeScrollSize(calculateInternalScrollPanelWidth(),
+                              calculateInternalScrollPanelHeight());
+    }
+
+    void synchronizeScrollSize(final int width, final int height)
+    {
         getInternalScrollPanel().setPixelSize(width,
                                               height);
         getPanel().fireLienzoPanelBoundsChangedEvent();
