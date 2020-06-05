@@ -14,6 +14,7 @@
           <name>JBoss by Red Hat</name>
           <url>http://www.jboss.org/</url>
         </organization>
+	<!-- useless comment -->
         <licenses>
           <license>
             <name>The Apache Software License, Version 2.0</name>
