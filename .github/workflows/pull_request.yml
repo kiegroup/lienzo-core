@@ -12,7 +12,7 @@ jobs:
     steps:
     - name: Build Chain ${{ matrix.java-version }}
       id: build-chain   
-      uses: kiegroup/github-action-build-chain@v1.1
+      uses: kiegroup/github-action-build-chain@v1.2
       with:
         child-dependencies: 'lienzo-tests'
         build-command: 'mvn -e -nsu -Dfull -Pwildfly clean install -Prun-code-coverage  -Dcontainer.profile=wildfly -Dcontainer=wildfly -Dintegration-tests=true -Dmaven.test.failure.ignore=true -DjvmArgs="-Xms1g -Xmx4g"'
