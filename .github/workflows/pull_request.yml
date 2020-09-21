@@ -19,6 +19,15 @@ jobs:
       - name: Install takari
         run: |
           gci env:* | sort-object name
+          echo "TESTING"
+          echo "TESTING1"
+          echo %M2_HOME%
+          echo "TESTING1_B"
+          echo $M2_HOME
+          echo "TESTING2"
+          echo "M2_HOME1: "+%M2_HOME%
+          echo "M2_HOME2: "+$M2_HOME
+          echo "END TESTING"
           (New-Object System.Net.WebClient).DownloadFile("https://repo1.maven.org/maven2/io/takari/aether/takari-local-repository/0.11.3/takari-local-repository-0.11.3.jar", "C:\ProgramData\chocolatey\lib\maven\apache-maven-3.6.3\lib\ext\takari-local-repository-0.11.3.jar")
           (New-Object System.Net.WebClient).DownloadFile("https://repo1.maven.org/maven2/io/takari/takari-filemanager/0.8.3/takari-filemanager-0.8.3.jar", "C:\ProgramData\chocolatey\lib\maven\apache-maven-3.6.3\lib\ext\takari-filemanager-0.8.3.jar")
           (New-Object System.Net.WebClient).DownloadFile("https://repo1.maven.org/maven2/io/takari/maven/takari-smart-builder/0.6.1/takari-smart-builder-0.6.1.jar", "C:\ProgramData\chocolatey\lib\maven\apache-maven-3.6.3\lib\ext\takari-smart-builder-0.6.1.jar")
