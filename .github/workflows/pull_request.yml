@@ -19,9 +19,10 @@ jobs:
       - name: Install takari
         run: |
           $client = New-Object System.Net.WebClient
-          $client.DownloadFile(https://repo1.maven.org/maven2/io/takari/aether/takari-local-repository/0.11.3/takari-local-repository-0.11.3.jar, $M2_HOME/lib/ext)
-          $client.DownloadFile(https://repo1.maven.org/maven2/io/takari/takari-filemanager/0.8.3/takari-filemanager-0.8.3.jar, $M2_HOME/lib/ext)
-          $client.DownloadFile(https://repo1.maven.org/maven2/io/takari/maven/takari-smart-builder/0.6.1/takari-smart-builder-0.6.1.jar, $M2_HOME/lib/ext)
+          $client.DownloadFile("https://repo1.maven.org/maven2/io/takari/aether/takari-local-repository/0.11.3/takari-local-repository-0.11.3.jar", "$M2_HOME/lib/ext")
+          $client.DownloadFile("https://repo1.maven.org/maven2/io/takari/takari-filemanager/0.8.3/takari-filemanager-0.8.3.jar", "$M2_HOME/lib/ext")
+          $client.DownloadFile("https://repo1.maven.org/maven2/io/takari/maven/takari-smart-builder/0.6.1/takari-smart-builder-0.6.1.jar", "$M2_HOME/lib/ext")
+          echo $M2_HOME
       - name: Build Chain ${{ matrix.java-version }}
         id: build-chain
         uses: kiegroup/github-action-build-chain@v1.4
