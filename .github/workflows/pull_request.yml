@@ -16,9 +16,6 @@ jobs:
         uses: actions/setup-java@v1
         with:
           java-version: ${{ matrix.java-version }}
-      - name: Check wget
-        run: |
-          wget -h
       - name: Install takari
         run: |
           $client = New-Object System.Net.WebClient
