@@ -14,7 +14,7 @@ build:
   - project: kiegroup/lienzo-core
     build-command:
       current: |
-        echo "::set-env name=KIE_VERSION::$(mvn org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate -Dexpression=project.version -q -DforceStdout)"
+        echo "KIE_VERSION=$(mvn org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
         mvn clean install -Dmaven.wagon.httpconnectionManager.ttlSeconds=25 -Dmaven.wagon.http.retryHandler.count=3 -Dversion.org.kie7=${{ env.KIE_VERSION }}
     archive-artifacts:
       path: |
