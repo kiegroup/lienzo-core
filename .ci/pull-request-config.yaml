@@ -14,7 +14,8 @@ build:
   - project: kiegroup/lienzo-core
     build-command:
       current: |
-        echo ${{ env.GITHUB_SERVER_URL }}
+        echo "GITHUB_SHA_SHORT=$(echo $GITHUB_SHA | cut -c 1-6)" >> $GITHUB_ENV
+        echo $GITHUB_SHA_SHORT
         echo "KIE_VERSION=$(mvn org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
         echo $KIE_VERSION
         echo "PEPE=value1"
