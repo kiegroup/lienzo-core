@@ -51,6 +51,7 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<version.org.kie7>7.46.0-SNAPSHOT</version.org.kie7>
 	</properties>
 
 	<scm>
