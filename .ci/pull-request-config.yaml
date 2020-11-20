@@ -20,8 +20,6 @@ build:
         echo $KIE_VERSION
         echo "PEPE=value1"
         echo $PEPE
-        export VAR1="value2"
-        echo ${{ env.VAR1 }}
         mvn clean install -Dmaven.wagon.httpconnectionManager.ttlSeconds=25 -Dmaven.wagon.http.retryHandler.count=3 -Dversion.org.kie7=${{ env.KIE_VERSION }}
     archive-artifacts:
       path: |
