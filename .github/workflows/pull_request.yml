@@ -26,7 +26,7 @@ jobs:
       - name: Checkout actions repository
         uses: actions/checkout@v2
         with:
-          repository: kiegroup/droolsjbpm-build-bootstrap
+          repository: ginxo/droolsjbpm-build-bootstrap
           path: composite-actions
           ref: tests/composite-actions
       - uses: ./composite-actions/.github/workflows/composite/java
