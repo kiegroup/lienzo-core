@@ -23,21 +23,19 @@ jobs:
     runs-on: ubuntu-latest
     name: Maven Build
     steps:
-      - name: Checkout actions repository
-        uses: actions/checkout@v2
-        with:
-          repository: ginxo/droolsjbpm-build-bootstrap
-          path: composite-actions
-          ref: tests/composite-actions
-      - uses: ./composite-actions/.github/workflows/composite/java
+      - name: Java and Maven Setup
+        uses: ginxo/droolsjbpm-build-bootstrap/.ci/actions/java@tests/composite-actions
         with:
           java-version: ${{ matrix.java-version }}
           maven-version: ${{ matrix.maven-version }}
-      - uses: ./composite-actions/.github/workflows/composite/cache-maven
+      - name: Cache Maven
+        uses: ginxo/droolsjbpm-build-bootstrap/.ci/actions/cache-maven@tests/composite-actions
         with:
           key-prefix: ${{ runner.os }}-${{ matrix.java-version }}-maven${{ matrix.maven-version }}
-      - uses: ./composite-actions/.github/workflows/composite/build-chain
+      - name: Build Chain
+        uses: ginxo/droolsjbpm-build-bootstrap/.ci/actions/build-chain@tests/composite-actions
         with:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
-      - uses: ./composite-actions/.github/workflows/composite/surefire-report
+      - name: Surefire Report
+        uses: ginxo/droolsjbpm-build-bootstrap/.ci/actions/surefire-report@tests/composite-actions
         if: ${{ always() }}
